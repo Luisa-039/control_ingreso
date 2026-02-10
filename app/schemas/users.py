@@ -10,7 +10,7 @@ class UserBase(BaseModel):
     estado: bool
 
 class UserCreate(UserBase):
-    pass_hash: str = Field(min_length=8)
+    pass_hash: str = Field(min_length=9, max_length=140)
 
 class UserUpdate(BaseModel):
     nombre_usuario: Optional[str] = Field(default=None, min_length=3, max_length=80)
