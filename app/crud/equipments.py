@@ -103,3 +103,37 @@ def update_estado_equip(db:Session, id_equip: str, estado_equipo: bool):
         db.rollback()
         logger.error(f"Error al cambiar el estado del equipo {id_equip}: {e}")
         raise Exception("Error de base de datos al cambiar el estado del equipo")
+def update_equip_by_id(db: Session, equipo_id: int, equipment: EquipoUpdate) -> Optional[bool]:
+    try:
+        equipment_data = equipment.model_dump(exclude_unset=True)
+        if not equipment_data:
+            return False 
+
+        set_clauses = ", ".join([f"{key} = :{key}" for key in equipment_data.keys()])
+        sentencia = text(f"""
+            UPDATE equipos_externos 
+            SET {set_clauses}
+            WHERE id_equipo = :id_equip
+        """)
+        equipment_data["id_equip"] = equipo_id
+
+        result = db.execute(sentencia, equipment_data)
+        db.commit()
+
+        return result.rowcount > 0
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Error al actualizar el id del equipo {equipo_id}: {e}")
+        raise Exception("Error de base de datos al actualizar el id del equipo")
+     
+def get_equipment_by_tipo(db: Session, tipo_equip: TipoEquipo):
+    try:
+        query = text("""SELECT *
+                     FROM equipos_externos 
+                     WHERE tipo_equipo = :equipo_tipo""")
+        result = db.execute(query, {"equipo_tipo": tipo_equip}).mappings().first()
+        return result
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener equipo por id: {e}")
+        raise Exception("Error de base de datos al obtener el equipo por id")
+
