@@ -29,7 +29,6 @@ class EquipoUpdate(BaseModel):
     marca_modelo: Optional[str] = Field(default=None,min_length=3, max_length=255)
     fecha_registro: Optional[datetime] = Field(default=None)
     persona_id: Optional[int] = Field(default=None)
-    estado: Optional[bool] = Field(default=None)
 
 class EquipoEstado(BaseModel):
     estado: Optional[bool] = None
@@ -44,4 +43,6 @@ class EquipoOut(BaseModel):
     marca_modelo: str
     persona_id: int
     fecha_registro: datetime
+    estado: bool
+
 
