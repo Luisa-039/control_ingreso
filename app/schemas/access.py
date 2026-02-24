@@ -28,5 +28,4 @@ class AccesUpdate(AccessBase):
     
 class AccessOut(AccessBase):
     id_acceso: int
-    
-    
+    fecha_salida: Optional[datetime] = None
