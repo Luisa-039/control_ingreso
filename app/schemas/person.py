@@ -36,3 +36,9 @@ class PersonEstado(BaseModel):
 
 class PersonOut(PersonBase):
     id_persona: int
+    nombre_completo: str
+    tipo_persona: str
+    tipo_documento: str
+    documento: str
+    fecha_registro: datetime
+    estado: int
