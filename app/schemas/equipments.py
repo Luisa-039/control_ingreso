@@ -12,7 +12,7 @@ class EquipoBase(BaseModel):
     serial: Optional[str] = None
     descripcion: str
     tipo_equipo: Optional[TipoEquipo] = None
-    foto_path: str
+    foto_path: Optional[str]
     marca_modelo: str
     persona_id: int
     fecha_registro: datetime
@@ -39,10 +39,17 @@ class EquipoOut(BaseModel):
     codigo_barras_inv: Optional[str] = None
     descripcion: str
     tipo_equipo: TipoEquipo
-    foto_path: str
+    foto_path: Optional[str]
     marca_modelo: str
     persona_id: int
     fecha_registro: datetime
     estado: bool
-
-
+    
+class EquipoScanOut(BaseModel):
+    serial: Optional[str]
+    codigo_barras_inv: Optional[str]
+    descripcion: str
+    tipo_equipo: str
+    foto_path: Optional[str]
+    marca_modelo: str
+    fecha_registro: datetime
