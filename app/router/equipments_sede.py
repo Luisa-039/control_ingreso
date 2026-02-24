@@ -132,6 +132,7 @@ def estado_equip(
             raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/by-cod_barras/{codigo_barras_equip}")
+
 def update_equip(codigo_barras_equip: str, 
                  equip: Equipo_sedeUpdate, 
                  db: Session = Depends(get_db),
@@ -147,21 +148,3 @@ def update_equip(codigo_barras_equip: str,
         return {"message": "Equipo actualizado correctamente"}
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-# @router.put("/by_serial/{serial_equip}")
-# def update_equip_by_serial(serial_equip: str, 
-#                  equip: Equipo_sedeUpdate, 
-#                  db: Session = Depends(get_db),
-#                  user_token: UserOut = Depends(get_current_user)):
-#     try:
-#         id_rol = user_token.rol_id
-#         if not verify_permissions(db, id_rol, modulo, 'actualizar'):
-#             raise HTTPException(status_code=401, detail="Usuario no autorizado")
-        
-#         success = crud_equipments_sede.update_equip_by_id(db, serial_equip, equip)
-#         if not success:
-#             raise HTTPException(status_code=400, detail="No se pudo actualizar el equipo")
-#         return {"message": "Equipo actualizado correctamente"}
-#     except SQLAlchemyError as e:
-#         raise HTTPException(status_code=500, detail=str(e))
-
