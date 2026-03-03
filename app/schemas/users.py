@@ -1,5 +1,6 @@
+
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
+from typing import Optional, List
 
 class UserBase(BaseModel):
     nombre_usuario: str = Field(min_length=3, max_length=50)
@@ -23,3 +24,12 @@ class UserEstado(BaseModel):
 
 class UserOut(UserBase):
     id_usuario: int
+    
+
+class PaginatedUsers(BaseModel):
+    page: int
+    page_size: int
+    total_users: int
+    total_pages: int
+    users: List[UserOut]
+    
