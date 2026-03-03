@@ -34,7 +34,7 @@ def create_user(db: Session, user: UserCreate) -> Optional[bool]:
     
 def get_user_by_email_for_login(db: Session, email: str):
     try:
-        query = text("""SELECT id_usuario, nombre_usuario, documento, usuarios.rol_id,
+        query = text("""SELECT id_usuario, nombre_usuario, documento, usuarios.rol_id, sede_id,
                 email, telefono, estado, roles.nombre, pass_hash
                      FROM usuarios 
                      INNER JOIN roles ON usuarios.rol_id = roles.id_rol
@@ -86,7 +86,6 @@ def update_user_by_id(db: Session, user_id: int, user: UserUpdate) -> Optional[b
 
         result = db.execute(sentencia, user_data)
         db.commit()
-
         return result.rowcount > 0
     except SQLAlchemyError as e:
         db.rollback()
@@ -164,3 +163,34 @@ def change_user_status(db: Session, id_usuario: int, nuevo_estado: bool) -> bool
         db.rollback()
         logger.error(f"Error al cambiar el estado del usuario {id_usuario}: {e}")
         raise Exception("Error de base de datos al cambiar el estado del usuario")
+    
+def get_all_users_pag(db: Session, skip:int = 0, limit = 10):
+    """
+    Obtiene los usuarios con paginación.
+    También realizar una segunda consulta para contar total de usuarios.
+    compatible con PostgreSQL, MySQL y SQLite 
+    """
+    try: 
+        
+        count_query = text("""SELECT COUNT(id_usuario) AS total 
+                     FROM usuarios
+                     """)
+        total_result = db.execute(count_query).scalar()
+
+        #2 Consultar usuarios
+        data_query = text("""SELECT id_usuario, rol_id, nombre_usuario, documento, email, telefono, estado
+                    FROM usuarios WHERE rol_id != 1
+                     LIMIT :limit OFFSET :skip
+        """)
+        users_list = db.execute(data_query,{"skip": skip, "limit": limit}).mappings().all()
+        
+        return {
+                "total": total_result or 0,
+                "users": users_list
+            }
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener los usuarios: {e}", exc_info=True)
+        raise Exception("Error de base de datos al obtener los usuarios")
+
+ 
+ 
