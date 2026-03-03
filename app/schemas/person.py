@@ -25,8 +25,8 @@ class PersonCreate(PersonBase):
     pass
 
 class PersonUpdate(BaseModel):
-    tipo_persona: Optional[TipoPersona]
-    tipo_documento: Optional[TipoDocumento]
+    tipo_persona: Optional[TipoPersona] =None
+    tipo_documento: Optional[TipoDocumento] =None
     documento: Optional[str] = Field(default=None, min_length=8, max_length=20)
     nombre_completo: Optional[str] = Field(default=None, min_length=3, max_length=50)
     
