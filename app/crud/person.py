@@ -13,11 +13,11 @@ def create_person(db: Session, person: PersonCreate) -> Optional[bool]:
         query = text("""
             INSERT INTO personas (
                 tipo_persona, tipo_documento,
-                documento, nombre_completo, codigo_barras, fecha_registro,
+                documento, nombre_completo,  fecha_registro,
                 estado
             ) VALUES (
                 :tipo_persona, :tipo_documento,
-                :documento, :nombre_completo, :codigo_barras, :fecha_registro,
+                :documento, :nombre_completo, :fecha_registro,
                 :estado
             )
         """)
@@ -32,7 +32,7 @@ def create_person(db: Session, person: PersonCreate) -> Optional[bool]:
 def get_person_by_document_number(db: Session, document: str):
     try:
         query = text("""SELECT personas.id_persona, personas.tipo_persona, personas.tipo_documento, 
-                     personas.documento, personas.nombre_completo, personas.codigo_barras, 
+                     personas.documento, personas.nombre_completo,
                      personas.fecha_registro, personas.estado
                      FROM personas
                      WHERE personas.documento = :document
@@ -48,7 +48,7 @@ def get_all_person(db: Session):
     try:
         query = text("""
             SELECT id_persona, tipo_persona, tipo_documento, documento,
-            nombre_completo, codigo_barras, fecha_registro, estado
+            nombre_completo, fecha_registro, estado
             FROM personas
         """)
         result = db.execute(query).mappings().all()
@@ -98,3 +98,34 @@ def change_persona_status(db: Session, id_persona: int, nuevo_estado: bool) -> b
         db.rollback()
         logger.error(f"Error al cambiar el estado de la persona {id_persona}: {e}")
         raise Exception("Error de base de datos al cambiar el estado de la persona")
+    
+def get_all_persons_pag(db: Session, skip:int = 0, limit = 10):
+    """
+    Obtiene las personas con paginación.
+    También realizar una segunda consulta para contar total de personas.
+    compatible con PostgreSQL, MySQL y SQLite 
+    """
+    try: 
+        
+        count_query = text("""SELECT COUNT(id_persona) AS total 
+                     FROM personas
+                     """)
+        total_result = db.execute(count_query).scalar()
+
+        #2 Consultar personas
+        data_query = text("""SELECT id_persona, tipo_persona, tipo_documento, documento,
+                          nombre_completo, fecha_registro,
+                          estado
+                    FROM personas
+                     LIMIT :limit OFFSET :skip
+        """)
+        persons_list = db.execute(data_query,{"skip": skip, "limit": limit}).mappings().all()
+        
+        return {
+                "total": total_result or 0,
+                "persons": persons_list
+            }
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener las personas: {e}", exc_info=True)
+        raise Exception("Error de base de datos al obtener las personas")
+    
