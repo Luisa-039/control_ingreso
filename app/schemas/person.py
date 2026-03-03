@@ -17,8 +17,7 @@ class PersonBase(BaseModel):
     tipo_persona: TipoPersona
     tipo_documento: TipoDocumento
     documento: str = Field(min_length=8, max_length=20)
-    nombre_completo: str = Field(min_length=3, max_length=50)
-    codigo_barras: Optional[str] = Field(default=None, min_length=3, max_length=100)    
+    nombre_completo: str = Field(min_length=3, max_length=50)  
     fecha_registro: datetime
     estado: bool
 
@@ -41,4 +40,11 @@ class PersonOut(PersonBase):
     tipo_documento: str
     documento: str
     fecha_registro: datetime
-    estado: int
+    estado: bool
+    
+class Paginatedperson(BaseModel):
+    page: int
+    page_size: int
+    total_persons: int
+    total_pages: int
+    persons: list[PersonOut]
