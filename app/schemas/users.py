@@ -8,6 +8,7 @@ class UserBase(BaseModel):
     email: EmailStr
     telefono: str = Field(min_length=7, max_length=15)
     documento: str = Field(min_length=8, max_length=20)
+    sede_id: int
     estado: bool
 
 class UserCreate(UserBase):
@@ -17,6 +18,7 @@ class UserUpdate(BaseModel):
     nombre_usuario: Optional[str] = Field(default=None, min_length=3, max_length=80)
     documento: Optional[str] = Field(default=None, min_length=6, max_length=50)
     email: Optional[str] = Field(default=None, min_length=3, max_length=100)
+    sede_id: Optional[int] = None
     telefono: Optional[str] = Field(default=None, min_length=7, max_length=15)
 
 class UserEstado(BaseModel):
