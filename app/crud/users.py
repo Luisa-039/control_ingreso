@@ -178,7 +178,7 @@ def get_all_users_pag(db: Session, skip:int = 0, limit = 10):
         total_result = db.execute(count_query).scalar()
 
         #2 Consultar usuarios
-        data_query = text("""SELECT id_usuario, rol_id, nombre_usuario, documento, email, telefono, estado
+        data_query = text("""SELECT id_usuario, rol_id, nombre_usuario, documento, email, telefono, estado, sede_id
                     FROM usuarios WHERE rol_id != 1
                      LIMIT :limit OFFSET :skip
         """)
