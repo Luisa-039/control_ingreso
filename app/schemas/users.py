@@ -26,6 +26,7 @@ class UserEstado(BaseModel):
 
 class UserOut(UserBase):
     id_usuario: int
+    nombre: str
     
 
 class PaginatedUsers(BaseModel):
