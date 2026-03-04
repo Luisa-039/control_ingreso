@@ -178,8 +178,10 @@ def get_all_users_pag(db: Session, skip:int = 0, limit = 10):
         total_result = db.execute(count_query).scalar()
 
         #2 Consultar usuarios
-        data_query = text("""SELECT id_usuario, rol_id, nombre_usuario, documento, email, telefono, estado, sede_id
-                    FROM usuarios WHERE rol_id != 1
+        data_query = text("""SELECT u.id_usuario, u.rol_id, u.nombre_usuario, u.documento, u.email, u.telefono, u.estado, u.sede_id, s.nombre
+                    FROM usuarios as u
+                    INNER JOIN sedes as s ON u.sede_id = s.id_sede
+                    WHERE rol_id != 1
                      LIMIT :limit OFFSET :skip
         """)
         users_list = db.execute(data_query,{"skip": skip, "limit": limit}).mappings().all()
