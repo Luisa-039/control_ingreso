@@ -33,7 +33,7 @@ def create_equipment(db: Session,
 def get_equipment_by_cod_barras(db: Session, codigo_barras: str):
     try:
         query = text("""SELECT *, p.nombre_completo
-                     FROM equipos_externos 
+                     FROM equipos_externos as e
                      INNER JOIN personas as p ON e.persona_id = p.id_persona
                      WHERE codigo_barras_inv = :codigo_barras""")
         result = db.execute(query, {"codigo_barras": codigo_barras}).mappings().first()
@@ -45,7 +45,7 @@ def get_equipment_by_cod_barras(db: Session, codigo_barras: str):
 def get_equipment_by_serial(db: Session, serial_eq: str):
     try:
         query = text("""SELECT *, p.nombre_completo
-                     FROM equipos_externos 
+                     FROM equipos_externos as e
                      INNER JOIN personas as p ON e.persona_id = p.id_persona
                      WHERE serial = :equipo_serial""")
         result = db.execute(query, {"equipo_serial": serial_eq}).mappings().first()
