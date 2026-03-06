@@ -32,8 +32,9 @@ def create_equipment(db: Session,
 
 def get_equipment_by_cod_barras(db: Session, codigo_barras: str):
     try:
-        query = text("""SELECT *
+        query = text("""SELECT *, p.nombre_completo
                      FROM equipos_externos 
+                     INNER JOIN personas as p ON e.persona_id = p.id_persona
                      WHERE codigo_barras_inv = :codigo_barras""")
         result = db.execute(query, {"codigo_barras": codigo_barras}).mappings().first()
         return result
@@ -43,8 +44,9 @@ def get_equipment_by_cod_barras(db: Session, codigo_barras: str):
 
 def get_equipment_by_serial(db: Session, serial_eq: str):
     try:
-        query = text("""SELECT *
+        query = text("""SELECT *, p.nombre_completo
                      FROM equipos_externos 
+                     INNER JOIN personas as p ON e.persona_id = p.id_persona
                      WHERE serial = :equipo_serial""")
         result = db.execute(query, {"equipo_serial": serial_eq}).mappings().first()
         return result
@@ -54,8 +56,9 @@ def get_equipment_by_serial(db: Session, serial_eq: str):
 
 def get_all_equipment(db: Session):
     try:
-        query = text("""SELECT *
-                     FROM equipos_externos 
+        query = text("""SELECT * , p.nombre_completo
+                     FROM equipos_externos as e
+                     INNER JOIN personas as p ON e.persona_id = p.id_persona
                      """)
         result = db.execute(query).mappings().all()
         return result
@@ -137,3 +140,36 @@ def get_equipment_by_tipo(db: Session, tipo_equip: TipoEquipo):
     except SQLAlchemyError as e:
         logger.error(f"Error al obtener equipo por id: {e}")
         raise Exception("Error de base de datos al obtener el equipo por id")
+
+def get_all_equipements_pag(db: Session, skip:int = 0, limit = 10):
+    """
+    Obtiene los equipos con paginación.
+    También realizar una segunda consulta para contar total de equipos.
+    compatible con PostgreSQL, MySQL y SQLite 
+    """
+    try: 
+        
+        count_query = text("""SELECT COUNT(id_equipo) AS total 
+                     FROM equipos_externos
+                     """)
+        total_result = db.execute(count_query).scalar()
+
+        #2 Consultar equipos
+        data_query = text("""SELECT eq.id_equipo, eq.serial, eq.codigo_barras_inv, eq.descripcion,
+                          eq.tipo_equipo, eq.foto_path, eq.marca_modelo, eq.persona_id, eq.fecha_registro,
+                          p.nombre_completo as nombre_completo, eq.estado
+                    FROM equipos_externos as eq
+                    INNER JOIN personas as p ON eq.persona_id = p.id_persona
+                     LIMIT :limit OFFSET :skip
+        """)
+        equipos_list = db.execute(data_query,{"skip": skip, "limit": limit}).mappings().all()
+        
+        return {
+                "total": total_result or 0,
+                "equipos": equipos_list
+            }
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener los equipos: {e}", exc_info=True)
+        raise Exception("Error de base de datos al obtener los equipos")
+
+ 
