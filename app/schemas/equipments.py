@@ -1,7 +1,7 @@
 from enum import Enum
 from datetime import datetime
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import List, Optional
 
 class TipoEquipo(str, Enum):
     computador = "Computador"
@@ -33,23 +33,16 @@ class EquipoUpdate(BaseModel):
 class EquipoEstado(BaseModel):
     estado: Optional[bool] = None
 
-class EquipoOut(BaseModel):
+class EquipoOut(EquipoBase):
     id_equipo: int
-    serial: Optional[str] = None
-    codigo_barras_inv: Optional[str] = None
-    descripcion: str
-    tipo_equipo: TipoEquipo
-    foto_path: Optional[str]
-    marca_modelo: str
+    nombre_completo: str
     persona_id: int
-    fecha_registro: datetime
-    estado: bool
+
     
-class EquipoScanOut(BaseModel):
-    serial: Optional[str]
-    codigo_barras_inv: Optional[str]
-    descripcion: str
-    tipo_equipo: str
-    foto_path: Optional[str]
-    marca_modelo: str
-    fecha_registro: datetime
+class PaginatedEquipos(BaseModel):
+    page: int
+    page_size: int
+    total_equipements: int
+    total_pages: int
+    equipos: List[EquipoOut]
+    
