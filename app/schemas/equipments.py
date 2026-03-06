@@ -17,9 +17,10 @@ class EquipoBase(BaseModel):
     persona_id: int
     fecha_registro: datetime
     estado: bool
-
-class EquipoCreate(EquipoBase):
     codigo_barras_inv: Optional[str] = None
+    
+class EquipoCreate(EquipoBase):
+    pass
 
 class EquipoUpdate(BaseModel):
     serial: Optional[str] = Field(default=None,min_length=3, max_length=255)
@@ -46,3 +47,4 @@ class PaginatedEquipos(BaseModel):
     total_pages: int
     equipos: List[EquipoOut]
     
+
