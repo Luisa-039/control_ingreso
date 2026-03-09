@@ -28,4 +28,3 @@ def read_root():
                 "message": "ok",
                 "autor": "Sistema"
             }
-            }
