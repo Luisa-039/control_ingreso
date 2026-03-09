@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.router import users, auth, person, sede, center, equipments, autorizacion_salida, movements
+from app.router import users, auth, person, sede, center, equipments, autorizacion_salida, movements, access
 
 app = FastAPI()
 app.add_middleware(
@@ -19,6 +19,7 @@ app.include_router(center.router, prefix="/center", tags=["center"])
 app.include_router(equipments.router, prefix="/equipments", tags=["equipments"])
 app.include_router(autorizacion_salida.router, prefix="/autorizacion_salida", tags=["autorizacion_salida"])
 app.include_router(movements.router, prefix="/movements", tags=["movements"])
+app.include_router(access.router, prefix="/access", tags=["access"])
 
 
 @app.get("/")
