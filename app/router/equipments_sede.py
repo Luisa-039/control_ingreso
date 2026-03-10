@@ -1,11 +1,11 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.crud.permisos import verify_permissions
 from app.router.dependencies import get_current_user
 from app.schemas.users import UserOut
-from app.schemas.equipments_sede import Equipo_sedeCreate, Equipo_sedeUpdate, Equipo_sedeOut, TipoEquipo_sede, Estado_equip_sede
+from app.schemas.equipments_sede import Equipo_sedeCreate, Equipo_sedeUpdate, Equipo_sedeOut, TipoEquipo_sede, Estado_equip_sede, PaginatedEquipos_sede
 from app.crud import equipments_sede as crud_equipments_sede
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -113,7 +113,7 @@ def update_equip_by_id(id_equip: int,
 
 @router.put("/estado/{id_equip}", status_code=status.HTTP_200_OK)
 def estado_equip(
-    id_eq: str,
+    id_equip: int,
     estado_equip: Estado_equip_sede,
     db: Session = Depends(get_db),
     user_token: UserOut = Depends(get_current_user)
@@ -123,7 +123,7 @@ def estado_equip(
         if not verify_permissions(db, id_rol, modulo, 'actualizar'):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
         
-        success = crud_equipments_sede.update_estado_equip_sede(db, id_eq, estado_equip)
+        success = crud_equipments_sede.update_estado_equip_sede(db, id_equip, estado_equip)
         if not success:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
@@ -148,3 +148,33 @@ def update_equip(codigo_barras_equip: str,
         return {"message": "Equipo actualizado correctamente"}
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/all_equips-pag", response_model=PaginatedEquipos_sede)
+def get_equipements_pag(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db),
+    user_token: UserOut = Depends(get_current_user)
+): 
+    try:        
+        id_rol = user_token.rol_id
+        if not verify_permissions(db, id_rol, modulo, 'seleccionar'):
+            raise HTTPException(status_code=401, detail="Usuario no autorizado")
+        
+        skip = (page - 1) * page_size
+        data = crud_equipments_sede.get_all_equipements_sede_pag(db, skip=skip, limit=page_size)
+
+        total = data["total"]  
+        equipos = data["equipos"]
+
+        return PaginatedEquipos_sede(
+            page= page,
+            page_size= page_size,
+            total_equipements= total,
+            total_pages= (total + page_size - 1) // page_size,
+            equipos= equipos
+        )
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
