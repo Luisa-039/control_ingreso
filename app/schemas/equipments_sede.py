@@ -12,7 +12,7 @@ class TipoEquipo_sede(str, Enum):
 class Estado_equip_sede(str, Enum):
     disponible = "Disponible",
     mantenimiento = "Mantenimiento",
-    fuera_de_sede = "Fuera de sede"
+    fuera_de_sede = "Fuera_de_sede"
     inactivo = "Inactivo"
     
 class Equipo_sedeBase(BaseModel):
@@ -23,9 +23,10 @@ class Equipo_sedeBase(BaseModel):
     marca_modelo: str
     fecha_registro: datetime
     estado: Estado_equip_sede
-
-class Equipo_sedeCreate(Equipo_sedeBase):
     codigo_barras_equipo: Optional[str] = None
+    
+class Equipo_sedeCreate(Equipo_sedeBase):
+    pass
 
 class Equipo_sedeUpdate(BaseModel):
     serial: Optional[str] = Field(default=None,min_length=3, max_length=255)
@@ -38,13 +39,14 @@ class Equipo_sedeUpdate(BaseModel):
 class Equipo_sedeEstado(BaseModel):
     estado: Optional[Estado_equip_sede] = None
 
-class Equipo_sedeOut(BaseModel):
+class Equipo_sedeOut(Equipo_sedeBase):
     id_equipo_sede: int
     sede_id: int
-    categoria: Optional[TipoEquipo_sede] = None
-    codigo_barras_equipo: Optional[str] = None
-    serial: Optional[str] = None
-    descripcion: Optional[str] = None
-    marca_modelo: str
-    fecha_registro: datetime
-    estado: Estado_equip_sede
+    nombre: str
+    
+class PaginatedEquipos_sede(BaseModel):
+    page: int
+    page_size: int
+    total_equipements: int
+    total_pages: int
+    equipos: List[Equipo_sedeOut]
