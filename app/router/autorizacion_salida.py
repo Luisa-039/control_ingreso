@@ -1,151 +1,88 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from typing import List
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
-from app.schemas.users import UserOut
 from app.crud.permisos import verify_permissions
 from app.router.dependencies import get_current_user
 from app.core.database import get_db
-from app.schemas.autorizacion_salida import (
-    AutorizacionSalidaCreate,
-    AutorizacionSalidaUpdate,
-    AutorizacionSalidaOut
-)
-from app.crud import autorizacion_salida as crud_autorizacion
+from app.schemas.center import CenterCreate, CenterUpdate, CenterOut
+from app.schemas.users import UserOut
+from app.crud import center as crud_center
+from sqlalchemy.exc import SQLAlchemyError
 
 router = APIRouter()
-modulo = 12
+modulo = 9
 
-
-@router.post("/crear", status_code=status.HTTP_201_CREATED)
-def create_autorizacion_salida(
-    autorizacion: AutorizacionSalidaCreate,
+@router.post("/crear-centro", status_code=status.HTTP_201_CREATED)
+def create_center(  
+    centro: CenterCreate,
     db: Session = Depends(get_db),
     user_token: UserOut = Depends(get_current_user)
 ):
-    """
-    Crear una nueva autorización de salida de equipo.
-    """
     try:
-        crud_autorizacion.create_autorizacion_salida(db, autorizacion)
-        return {"message": "Autorización de salida creada correctamente"}
+        id_rol = user_token.rol_id       
+        if not verify_permissions(db, id_rol, modulo, 'insertar'):
+            raise HTTPException(status_code=401, detail= 'Usuario no autorizado')
+        crud_center.create_center(db, centro)
+        return {"message": "Centro creado correctamente"}
+    
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/all-autorizaciones", response_model=list[AutorizacionSalidaOut])
-def get_all_autorizaciones(
-    skip: int = Query(0, ge=0, description="Número de registros a saltar"),
-    limit: int = Query(100, ge=1, le=500, description="Límite de registros"),
+    
+@router.get("/centro-by-code", response_model=CenterOut)
+def get_center(
+    codigo: str,
     db: Session = Depends(get_db),
     user_token: UserOut = Depends(get_current_user)
 ):
-    """
-    Obtener todas las autorizaciones de salida con paginación opcional.
-    """
     try:
-        id_rol = user_token.rol_id
+        id_rol=user_token.rol_id
+
         if not verify_permissions(db, id_rol, modulo, 'seleccionar'):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
-        
-        autorizaciones = crud_autorizacion.get_all_autorizaciones(
-            db, skip=skip, limit=limit
-        )
-        return autorizaciones
+
+        centro = crud_center.get_center_by_code(db, codigo)
+        if not centro:
+            raise HTTPException(status_code=404, detail="Centro no encontrado")
+        return centro
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/{id_salida}")
-def get_autorizacion_by_id(
-    id_salida: int,
+    
+@router.get("/all/center", response_model=List[CenterOut])
+def get_all_center(
     db: Session = Depends(get_db),
     user_token: UserOut = Depends(get_current_user)
 ):
-    """
-    Obtener una autorización de salida específica por ID.
-    """
     try:
         id_rol = user_token.rol_id
-        if not verify_permissions(db, id_rol, modulo, 'seleccionar'):
+        if not verify_permissions(db, id_rol, modulo, "seleccionar"):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
-        
-        autorizacion = crud_autorizacion.get_autorizacion_by_id(db, id_salida)
-        if not autorizacion:
-            raise HTTPException(status_code=404, detail="Autorización no encontrada")
-        return autorizacion
+        center = crud_center.get_all_center(db)
+        return center
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/equipo/{equipo_id}")
-def get_autorizaciones_by_equipo(
-    equipo_id: int,
+    
+@router.put("/by-id/{id_centro}")
+def update_center_by_id(
+    id_centro: int, 
+    center: CenterUpdate, 
     db: Session = Depends(get_db),
     user_token: UserOut = Depends(get_current_user)
 ):
-    """
-    Obtener todas las autorizaciones de salida de un equipo específico.
-    """
-    try:
-        id_rol = user_token.rol_id
-        if not verify_permissions(db, id_rol, modulo, 'seleccionar'):
-            raise HTTPException(status_code=401, detail="Usuario no autorizado")
-        
-        autorizaciones = crud_autorizacion.get_autorizaciones_by_equipo(db, equipo_id)
-        return autorizaciones
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/usuario/{usuario_id_autoriza}")
-def get_autorizaciones_by_usuario(
-    usuario_id_autoriza: int,
-    db: Session = Depends(get_db),
-    user_token: UserOut = Depends(get_current_user)
-):
-    """
-    Obtener todas las autorizaciones creadas por un usuario específico.
-    """
     try:
         id_rol = user_token.rol_id
         if not verify_permissions(db, id_rol, modulo, 'actualizar'):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
         
-        autorizaciones = crud_autorizacion.get_autorizaciones_by_usuario(db, usuario_id_autoriza)
-        return autorizaciones
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.put("/{id_salida}")
-def update_autorizacion(
-    id_salida: int,
-    autorizacion: AutorizacionSalidaUpdate,
-    db: Session = Depends(get_db),
-    user_token: UserOut = Depends(get_current_user)
-):
-    """
-    Actualizar una autorización de salida existente.
-    """
-    try:
-        id_rol = user_token.rol_id
-        if not verify_permissions(db, id_rol, modulo, 'actualizar'):
-            raise HTTPException(status_code=401, detail="Usuario no autorizado")
-        
-        success = crud_autorizacion.update_autorizacion_by_id(db, id_salida, autorizacion)
+        success = crud_center.update_center_by_id(db, id_centro, center)
         if not success:
-            raise HTTPException(
-                status_code=400,
-                detail="No se pudo actualizar la autorización"
-            )
-        return {"message": "Autorización actualizada correctamente"}
+            raise HTTPException(status_code=400, detail="No se pudo actualizar el centro")
+        return {"message": "Centro actualizado correctamente"}
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.put("/cambiar-estado/{id_autorizacion}", status_code=status.HTTP_200_OK)
-def change_person_status(
-    id_autorizacion: int,
+    
+@router.put("/cambiar-estado/{id_center}", status_code=status.HTTP_200_OK)
+def change_center_status(
+    id_center: int,
     nuevo_estado: bool,
     db: Session = Depends(get_db),
     user_token: UserOut = Depends(get_current_user)
@@ -155,13 +92,13 @@ def change_person_status(
         if not verify_permissions(db, id_rol, modulo, 'actualizar'):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
 
-        success = crud_autorizacion.change_autorizacion_status(db, id_autorizacion, nuevo_estado)
+        success = crud_center.change_center_status(db, id_center, nuevo_estado)
         if not success:
-            raise HTTPException(status_code=404, detail="Autorización no encontrado")
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-        return {"message": f"Estado de la persona actualizado a {nuevo_estado}"}
+        return {"message": f"Estado del centro actualizado a {nuevo_estado}"}
 
     except HTTPException:
         raise
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500,detail=str(e)) 
+    except Exception as e:
+        raise HTTPException(status_code=500,detail=str(e))
