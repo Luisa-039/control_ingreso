@@ -54,7 +54,7 @@ def get_all_center(db: Session):
         logger.error(f"Error al obtener el listado de centros: {e}")
         raise Exception("Error de base de datos al obtener el listado de centros")
     
-def update_center_by_code(db: Session, code: str, centro: CenterUpdate) -> Optional[bool]:
+def update_center_by_id(db: Session, id_centro: int, centro: CenterUpdate) -> Optional[bool]:
     try:
         center_data = centro.model_dump(exclude_unset=True)
         if not center_data:
@@ -64,10 +64,10 @@ def update_center_by_code(db: Session, code: str, centro: CenterUpdate) -> Optio
         sentencia = text(f"""
             UPDATE centros
             SET {set_clauses}
-            WHERE codigo_centro = :codigo_centro
+            WHERE id_centro = :id_centro
         """)
 
-        center_data["codigo_centro"] = code
+        center_data["id_centro"] = id_centro
 
         result = db.execute(sentencia, center_data)
         db.commit()
@@ -76,7 +76,7 @@ def update_center_by_code(db: Session, code: str, centro: CenterUpdate) -> Optio
     
     except SQLAlchemyError as e:
         db.rollback()
-        logger.error(f"Error al actualizar el centro {code}: {e}")
+        logger.error(f"Error al actualizar el centro por id: {e}")
         raise Exception("Error de base de datos al actualizar el centro")
     
 def change_center_status(db: Session, id_centro: int, nuevo_estado: bool) -> bool:
