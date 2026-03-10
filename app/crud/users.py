@@ -16,11 +16,11 @@ def create_user(db: Session, user: UserCreate) -> Optional[bool]:
         query = text("""
             INSERT INTO usuarios (
                 nombre_usuario, rol_id,
-                email, documento, telefono, pass_hash,
+                email, documento, telefono, pass_hash,sede_id,
                 estado
             ) VALUES (
                 :nombre_usuario, :rol_id,
-                :email, :documento, :telefono, :pass_hash,
+                :email, :documento, :telefono, :pass_hash, :sede_id,
                 :estado
             )
         """)
@@ -58,11 +58,11 @@ def get_user_by_email(db: Session, email: str):
     
 def get_all_user_except_admins(db: Session):
     try:
-        query = text("""SELECT id_usuario, nombre_usuario, documento, usuarios.rol_id,
-                     email, telefono, estado, pass_hash
-                     FROM usuarios 
-                     INNER JOIN roles ON usuarios.rol_id = roles.id_rol
-                     WHERE usuarios.rol_id NOT IN (1)""")
+        query = text("""SELECT u.id_usuario, u.nombre_usuario, u.documento, u.rol_id, 
+                     u.email, u.telefono, u.sede_id, u.estado, u.pass_hash, r.nombre
+                     FROM usuarios as u
+                     INNER JOIN roles as r ON u.rol_id = r.id_rol
+                     WHERE u.rol_id NOT IN (1)""")
         result = db.execute(query).mappings().all()
         return result
     except SQLAlchemyError as e:
@@ -193,6 +193,3 @@ def get_all_users_pag(db: Session, skip:int = 0, limit = 10):
     except SQLAlchemyError as e:
         logger.error(f"Error al obtener los usuarios: {e}", exc_info=True)
         raise Exception("Error de base de datos al obtener los usuarios")
-
- 
- 
