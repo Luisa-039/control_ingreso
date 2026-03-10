@@ -65,9 +65,9 @@ def update_person_by_document(db: Session, document: str, person: PersonUpdate) 
 
         set_clauses = ", ".join([f"{key} = :{key}" for key in person_data.keys()])
         sentencia = text(f"""
-            UPDATE personas 
+            UPDATE personas as p
             SET {set_clauses}
-            WHERE documento = :documento
+            WHERE p.documento = :documento
         """)
 
         person_data["documento"] = document
