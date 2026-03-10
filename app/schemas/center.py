@@ -10,6 +10,7 @@ class CenterCreate(CenterBase):
     pass
 
 class CenterUpdate(BaseModel):
+    codigo_centro: str = Field(min_length=3, max_length=15)
     nombre: Optional[str] = Field(default=None, min_length=3, max_length=100)
 
 class CenterEstado(BaseModel):
