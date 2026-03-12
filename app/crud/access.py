@@ -4,7 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 import logging
 
-from app.schemas.access import AccessCreate, AccesUpdate, AccessOut
+from app.schemas.access import AccessCreate, AccessOut, PaginatedAccess
 
 logger = logging.getLogger(__name__)
 
@@ -450,5 +450,37 @@ def get_all_access(db:Session):
     except SQLAlchemyError as e:
         logger.error(f"Error al obtener todos los registros: {e}")
         raise Exception("Error de base de datos al obtener todos los registros")
+
     
+def get_all_access_pag(db: Session, skip:int = 0, limit = 10):
+    """
+    Obtiene los usuarios con paginación.
+    También realizar una segunda consulta para contar total de autorizaciones.
+    compatible con PostgreSQL, MySQL y SQLite 
+    """
+    try: 
         
+        count_query = text("""SELECT COUNT(id_autorizacion) AS total 
+                     FROM autorizacion_salida
+                     """)
+        total_result = db.execute(count_query).scalar()
+
+        #2 Consultar usuarios
+        data_query = text("""SELECT ra.id_acceso, ra.sede_id, ra.persona_id, 
+                            ra.equipo_id, ra.usuario_registro_id,
+                            ra.documento, ra.tipo_movimiento,
+                            ra.fecha_entrada, ra.fecha_salida
+                            FROM registro_accesos AS ra
+                          INNER JOIN personas as p ON p.id_persona = ra.persona_id
+                          INNER JOIN equipos_externos as e ON e.id_equipo = ra.equipo_id
+                          LIMIT :limit OFFSET :skip
+        """)
+        access_list = db.execute(data_query,{"skip": skip, "limit": limit}).mappings().all()
+        
+        return {
+                "total": total_result or 0,
+                "access": access_list
+            }
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener las autorizaciones de salida: {e}", exc_info=True)
+        raise Exception("Error de base de datos al obtener las autorizaciones de salida")
