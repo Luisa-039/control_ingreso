@@ -11,12 +11,12 @@ class TipoDocumento (str, Enum):
     cc = "CC"
     ti = "TI"
     ce = "CE"
-    pasaporte = "pasaporte"
+    pasaporte = "Pasaporte"
 
 class PersonBase(BaseModel):
     tipo_persona: TipoPersona
     tipo_documento: TipoDocumento
-    documento: str = Field(min_length=8, max_length=20)
+    documento: str = Field(min_length=6, max_length=20)
     nombre_completo: str = Field(min_length=3, max_length=50)  
     fecha_registro: datetime
     estado: bool
