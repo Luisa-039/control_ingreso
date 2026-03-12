@@ -1,7 +1,7 @@
 from enum import Enum
 from datetime import datetime
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 
 class AccessBase(BaseModel): 
@@ -29,3 +29,11 @@ class AccesUpdate(AccessBase):
 class AccessOut(AccessBase):
     id_acceso: int
     fecha_salida: Optional[datetime] = None
+    
+class PaginatedAccess(BaseModel):
+    page: int
+    page_size: int
+    total_access: int
+    total_pages: int
+    access: List[AccessOut]
+    
