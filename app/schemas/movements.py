@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from enum import Enum
 
 class TipoMovimiento (str, Enum):
@@ -22,4 +22,14 @@ class MovementUpdate(BaseModel):
     tipo_movimiento: Optional[TipoMovimiento] = None
 
 class MovementOut(MovementBase):
-    id_movimiento_sede: int
+    id_movimiento_sede: int 
+    serial_equipo:str
+    categoria:str
+    
+class PaginatedMovements(BaseModel):
+    page: int
+    page_size: int
+    total_movements: int
+    total_pages: int
+    movements: List[MovementOut]
+    
