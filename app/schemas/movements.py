@@ -25,6 +25,7 @@ class MovementOut(MovementBase):
     id_movimiento_sede: int 
     serial_equipo:str
     categoria:str
+    nombre_usuario: str
     
 class PaginatedMovements(BaseModel):
     page: int
@@ -33,3 +34,4 @@ class PaginatedMovements(BaseModel):
     total_pages: int
     movements: List[MovementOut]
     
+
