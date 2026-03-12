@@ -145,3 +145,35 @@ def change_autorizacion_status(db: Session, id_autorizacion: int, nuevo_estado: 
         db.rollback()
         logger.error(f"Error al cambiar el estado de la persona {id_autorizacion}: {e}")
         raise Exception("Error de base de datos al cambiar el estado de la persona")
+    
+    
+def get_all_auth_salida_pag(db: Session, skip:int = 0, limit = 10):
+    """
+    Obtiene los usuarios con paginación.
+    También realizar una segunda consulta para contar total de autorizaciones.
+    compatible con PostgreSQL, MySQL y SQLite 
+    """
+    try: 
+        
+        count_query = text("""SELECT COUNT(id_autorizacion) AS total 
+                     FROM autorizacion_salida
+                     """)
+        total_result = db.execute(count_query).scalar()
+
+        #2 Consultar usuarios
+        data_query = text("""SELECT a_s.id_autorizacion, a_s.equipo_id, a_s.usuario_id_autoriza, a_s.destino,
+                          a_s.motivo, a_s.fecha_autorizacion, a_s.estado, u.nombre_usuario, e.serial, e.categoria
+                          FROM autorizacion_salida as a_s
+                          INNER JOIN usuarios as u ON u.id_usuario = a_s.usuario_id_autoriza
+                          INNER JOIN equipos_sede_inv as e ON e.id_equipo_sede = a_s.equipo_id
+                          LIMIT :limit OFFSET :skip
+        """)
+        auth_salida_list = db.execute(data_query,{"skip": skip, "limit": limit}).mappings().all()
+        
+        return {
+                "total": total_result or 0,
+                "auth_salida": auth_salida_list
+            }
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener las autorizaciones de salida: {e}", exc_info=True)
+        raise Exception("Error de base de datos al obtener las autorizaciones de salida")
