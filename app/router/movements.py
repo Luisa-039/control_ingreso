@@ -47,7 +47,7 @@ def get_movement_by_id(
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@router.get("/by-type", response_model=MovementOut)
+@router.get("/by-type", response_model=List[MovementOut])
 def get_movement_type(
     tipo_movimiento: TipoMovimiento,
     db: Session = Depends(get_db),
@@ -84,15 +84,17 @@ def all_movements(db: Session = Depends(get_db),
     
     
 @router.get("/by-serial",  response_model=List[MovementOut])
-def movement_serial(db: Session = Depends(get_db),
-                   user_token: UserOut = Depends(get_current_user)):
+def movement_serial(
+    serial: str,
+    db: Session = Depends(get_db),
+    user_token: UserOut = Depends(get_current_user)):
     try:
         id_rol=user_token.rol_id
 
         if not verify_permissions(db, id_rol, modulo, 'seleccionar'):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
         
-        movimiento = crud_movement.get_movement_serial(db)
+        movimiento = crud_movement.get_movement_serial(db, serial)
         if not movimiento:
             raise HTTPException(status_code=404, detail="Movimientos no encontrados")
         return movimiento
