@@ -69,11 +69,11 @@ def get_movement_type(db:Session, tipo_movimiento: TipoMovimiento):
 def get_movement_serial(db:Session, serial: str):
     try:
         query = text("""SELECT m.id_movimiento_sede, m.equipo_id, m.autorizacion_id,
-        m.usuario_resgistra, m.tipo_movimiento, m.fecha_movimiento, e.serial AS serial_equipo
-        FROM movimientos_equipos_sede m
-        INNER JOIN equipos_sede_inv e ON m.equipo_id = e.id_equipo
-        WHERE e.serial = :serial
-         """)
+                        m.usuario_registra, m.tipo_movimiento, m.fecha_movimiento, e.serial AS serial_equipo
+                        FROM movimientos_equipos_sede m
+                        INNER JOIN equipos_sede_inv e ON m.equipo_id = e.id_equipo_sede
+                        WHERE e.serial = :serial
+                    """)
         result = db.execute(query, {"serial": serial}).mappings().first()
         return result
     except SQLAlchemyError as e:
@@ -107,4 +107,33 @@ def update_movement_by_id(db: Session, movimiento_id: int, movement_update: Move
         db.rollback()
         logger.error(f"Error al actualizar los movimientos: {e}")
         raise Exception("Error de base de datos al actualizar los movimientos")
-    
+
+def get_all_movements_pag(db: Session, skip:int = 0, limit = 10):
+    """
+    Obtiene los usuarios con paginación.
+    También realizar una segunda consulta para contar total de autorizaciones.
+    compatible con PostgreSQL, MySQL y SQLite 
+    """
+    try: 
+        
+        count_query = text("""SELECT COUNT(id_movimiento_sede) AS total 
+                     FROM movimientos_equipos_sede
+                     """)
+        total_result = db.execute(count_query).scalar()
+
+        #2 Consultar movimientos
+        data_query = text("""SELECT m.id_movimiento_sede, m.equipo_id, m.autorizacion_id,
+                            m.usuario_registra, m.tipo_movimiento, m.fecha_movimiento, e.serial AS serial_equipo, e.categoria
+                            FROM movimientos_equipos_sede m
+                            INNER JOIN equipos_sede_inv e ON m.equipo_id = e.id_equipo_sede
+                            LIMIT :limit OFFSET :skip
+                        """)
+        movements_list = db.execute(data_query,{"skip": skip, "limit": limit}).mappings().all()
+        
+        return {
+                "total": total_result or 0,
+                "movements": movements_list
+            }
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener las autorizaciones de salida: {e}", exc_info=True)
+        raise Exception("Error de base de datos al obtener las autorizaciones de salida")
