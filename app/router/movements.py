@@ -1,10 +1,10 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status,Query
 from sqlalchemy.orm import Session
 from app.crud.permisos import verify_permissions
 from app.router.dependencies import get_current_user
 from app.core.database import get_db
-from app.schemas.movements import MovementCreate, MovementUpdate, MovementOut, TipoMovimiento
+from app.schemas.movements import MovementCreate, MovementUpdate, MovementOut, TipoMovimiento, PaginatedMovements
 from app.schemas.users import UserOut
 from app.crud import movements as crud_movement
 from sqlalchemy.exc import SQLAlchemyError
@@ -117,3 +117,30 @@ def update_movement_by_id(
         return {"message": "Movimiento actualizado correctamente"}
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/paginated", response_model=PaginatedMovements)
+def get_movements_pag(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db),
+    user_token: UserOut = Depends(get_current_user)
+):
+
+    id_rol = user_token.rol_id
+    if not verify_permissions(db, id_rol, modulo, "seleccionar"):
+        raise HTTPException(status_code=401, detail="Usuario no autorizado")
+
+    skip = (page - 1) * page_size
+
+    data = crud_movement.get_all_movements_pag(db, skip=skip, limit=page_size)
+
+    total = data["total"]
+    movements = data["movements"]
+
+    return PaginatedMovements(
+        page=page,
+        page_size=page_size,
+        total_movements=total,
+        total_pages=(total + page_size - 1) // page_size,
+        movements=movements,
+    )
