@@ -46,18 +46,19 @@ def get_autorizacion_by_id(db: Session, id_autorizacion: int):
         raise Exception("Error de base de datos al obtener la autorización")
 
 
-def get_all_autorizaciones(
-    db: Session,
-    skip: int = 0,
-    limit: int = 100
+def get_all_autorizaciones(db: Session, skip: int = 0,   limit: int = 100
 ):
     """Obtener todas las autorizaciones de salida con paginación y filtro opcional"""
     try:
         query = text("""
-            SELECT * FROM autorizacion_salida
-            ORDER BY fecha_autorizacion DESC
-            LIMIT :limit OFFSET :skip
-            """)
+                     SELECT a_s.id_autorizacion, a_s.equipo_id, a_s.usuario_id_autoriza, a_s.destino,
+                     a_s.motivo, a_s.fecha_autorizacion, a_s.estado, u.nombre_usuario, e.serial, e.categoria
+                     FROM autorizacion_salida as a_s
+                     INNER JOIN usuarios as u ON u.id_usuario = a_s.usuario_id_autoriza
+                     INNER JOIN equipos_sede_inv as e ON e.id_equipo_sede = a_s.equipo_id
+                     ORDER BY fecha_autorizacion DESC
+                     LIMIT :limit OFFSET :skip
+                """)
         result = db.execute(query, {
             "limit": limit,
             "skip": skip
@@ -67,6 +68,8 @@ def get_all_autorizaciones(
     except SQLAlchemyError as e:
         logger.error(f"Error al obtener autorizaciones: {e}")
         raise Exception("Error de base de datos al obtener las autorizaciones")
+
+
 
 
 def get_autorizaciones_by_equipo(db: Session, equipo_id: int):
@@ -177,3 +180,4 @@ def get_all_auth_salida_pag(db: Session, skip:int = 0, limit = 10):
     except SQLAlchemyError as e:
         logger.error(f"Error al obtener las autorizaciones de salida: {e}", exc_info=True)
         raise Exception("Error de base de datos al obtener las autorizaciones de salida")
+
