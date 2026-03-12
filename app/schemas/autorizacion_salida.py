@@ -1,6 +1,6 @@
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
+from pydantic import BaseModel, Field
+from typing import Optional, List
 
 
 class AutorizacionSalidaBase(BaseModel):
@@ -29,3 +29,13 @@ class AutorizacionEstado(BaseModel):
 class AutorizacionSalidaOut(AutorizacionSalidaBase):
     id_autorizacion: int
     usuario_id_autoriza: int
+    serial:str
+    categoria:str
+    
+class PaginatedAuth_salida(BaseModel):
+    page: int
+    page_size: int
+    total_auth_salida: int
+    total_pages: int
+    auth_salida: List[AutorizacionSalidaOut]
+    
