@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy.exc import SQLAlchemyError
 from app.schemas.movements import MovementCreate, MovementUpdate, TipoMovimiento
 
@@ -44,8 +44,11 @@ def create_movement(db: Session, movement: MovementCreate) -> Optional[bool]:
     
 def get_movement_by_id(db: Session, id: int):
     try:
-        query = text("""SELECT *
-                     FROM movimientos_equipos_sede 
+        query = text("""SELECT m.id_movimiento_sede, m.equipo_id, m.autorizacion_id,
+                        m.usuario_registra, m.tipo_movimiento, m.fecha_movimiento, e.serial AS serial_equipo, e.categoria, u.nombre_usuario
+                        FROM movimientos_equipos_sede m
+                        INNER JOIN equipos_sede_inv e ON m.equipo_id = e.id_equipo_sede
+                        INNER JOIN usuarios as u ON u.id_usuario = m.usuario_registra
                      WHERE id_movimiento_sede = :id_movimiento_sede
                      """)
         result = db.execute(query, {"id_movimiento_sede": id}).mappings().first()
@@ -54,13 +57,16 @@ def get_movement_by_id(db: Session, id: int):
         logger.error(f"Error al obtener movimiento por id: {e}")
         raise Exception("Error de base de datos al obtener el movimiento")
     
-def get_movement_type(db:Session, tipo_movimiento: TipoMovimiento):
+def get_movement_type(db:Session, tipo_movimiento: List[TipoMovimiento]):
     try:
-        query = text("""SELECT *
-                     FROM movimientos_equipos_sede
+        query = text("""SELECT m.id_movimiento_sede, m.equipo_id, m.autorizacion_id,
+                        m.usuario_registra, m.tipo_movimiento, m.fecha_movimiento, e.serial AS serial_equipo, e.categoria, u.nombre_usuario
+                        FROM movimientos_equipos_sede m
+                        INNER JOIN equipos_sede_inv e ON m.equipo_id = e.id_equipo_sede
+                        INNER JOIN usuarios as u ON u.id_usuario = m.usuario_registra
                      WHERE tipo_movimiento = :tipo_movimiento
                      """)
-        result = db.execute(query, {"tipo_movimiento": tipo_movimiento}).mappings().first()
+        result = db.execute(query, {"tipo_movimiento": tipo_movimiento}).mappings().all()
         return result
     except SQLAlchemyError as e:
         logger.error(f"Error al obtener movimiento por tipo: {e}")
@@ -69,12 +75,13 @@ def get_movement_type(db:Session, tipo_movimiento: TipoMovimiento):
 def get_movement_serial(db:Session, serial: str):
     try:
         query = text("""SELECT m.id_movimiento_sede, m.equipo_id, m.autorizacion_id,
-                        m.usuario_registra, m.tipo_movimiento, m.fecha_movimiento, e.serial AS serial_equipo
+                        m.usuario_registra, m.tipo_movimiento, m.fecha_movimiento, e.serial AS serial_equipo, e.categoria, u.nombre_usuario
                         FROM movimientos_equipos_sede m
                         INNER JOIN equipos_sede_inv e ON m.equipo_id = e.id_equipo_sede
+                        INNER JOIN usuarios as u ON u.id_usuario = m.usuario_registra
                         WHERE e.serial = :serial
                     """)
-        result = db.execute(query, {"serial": serial}).mappings().first()
+        result = db.execute(query, {"serial": serial}).mappings().all()
         return result
     except SQLAlchemyError as e:
         logger.error(f"Error al obtener movimiento por serial")
@@ -82,8 +89,11 @@ def get_movement_serial(db:Session, serial: str):
     
 def get_all_movements(db: Session):
     try:
-        query = text("""SELECT *
-                    FROM movimientos_equipos_sede
+        query = text("""SELECT m.id_movimiento_sede, m.equipo_id, m.autorizacion_id,
+                        m.usuario_registra, m.tipo_movimiento, m.fecha_movimiento, e.serial AS serial_equipo, e.categoria, u.nombre_usuario
+                        FROM movimientos_equipos_sede m
+                        INNER JOIN equipos_sede_inv e ON m.equipo_id = e.id_equipo_sede
+                        INNER JOIN usuarios as u ON u.id_usuario = m.usuario_registra
                     """)
         result = db.execute(query).mappings().all()
         return result
@@ -123,9 +133,10 @@ def get_all_movements_pag(db: Session, skip:int = 0, limit = 10):
 
         #2 Consultar movimientos
         data_query = text("""SELECT m.id_movimiento_sede, m.equipo_id, m.autorizacion_id,
-                            m.usuario_registra, m.tipo_movimiento, m.fecha_movimiento, e.serial AS serial_equipo, e.categoria
+                            m.usuario_registra, m.tipo_movimiento, m.fecha_movimiento, e.serial AS serial_equipo, e.categoria, u.nombre_usuario
                             FROM movimientos_equipos_sede m
                             INNER JOIN equipos_sede_inv e ON m.equipo_id = e.id_equipo_sede
+                            INNER JOIN usuarios as u ON u.id_usuario = m.usuario_registra
                             LIMIT :limit OFFSET :skip
                         """)
         movements_list = db.execute(data_query,{"skip": skip, "limit": limit}).mappings().all()
