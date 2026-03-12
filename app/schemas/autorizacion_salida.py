@@ -31,6 +31,7 @@ class AutorizacionSalidaOut(AutorizacionSalidaBase):
     usuario_id_autoriza: int
     serial:str
     categoria:str
+    nombre_usuario: str
     
 class PaginatedAuth_salida(BaseModel):
     page: int
@@ -39,3 +40,4 @@ class PaginatedAuth_salida(BaseModel):
     total_pages: int
     auth_salida: List[AutorizacionSalidaOut]
     
+
