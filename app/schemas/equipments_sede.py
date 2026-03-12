@@ -1,7 +1,7 @@
 from enum import Enum
 from datetime import datetime
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 
 class TipoEquipo_sede(str, Enum):
     portatil = "Portátil"
@@ -10,8 +10,8 @@ class TipoEquipo_sede(str, Enum):
     otro = "Otro"
 
 class Estado_equip_sede(str, Enum):
-    disponible = "Disponible",
-    mantenimiento = "Mantenimiento",
+    disponible = "Disponible"
+    mantenimiento = "Mantenimiento"
     fuera_de_sede = "Fuera_de_sede"
     inactivo = "Inactivo"
     
@@ -24,7 +24,7 @@ class Equipo_sedeBase(BaseModel):
     fecha_registro: datetime
     estado: Estado_equip_sede
     codigo_barras_equipo: Optional[str] = None
-    
+
 class Equipo_sedeCreate(Equipo_sedeBase):
     pass
 
@@ -37,12 +37,13 @@ class Equipo_sedeUpdate(BaseModel):
     sede_id: Optional[int] = Field(default=None)
 
 class Equipo_sedeEstado(BaseModel):
-    estado: Optional[Estado_equip_sede] = None
+    estado: Estado_equip_sede
 
 class Equipo_sedeOut(Equipo_sedeBase):
     id_equipo_sede: int
     sede_id: int
     nombre: str
+   
     
 class PaginatedEquipos_sede(BaseModel):
     page: int
