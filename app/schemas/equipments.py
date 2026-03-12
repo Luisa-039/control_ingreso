@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
+
 class TipoEquipo(str, Enum):
     computador = "Computador"
     herramienta = "Herramienta"
@@ -18,7 +19,7 @@ class EquipoBase(BaseModel):
     fecha_registro: datetime
     estado: bool
     codigo_barras_inv: Optional[str] = None
-    
+
 class EquipoCreate(EquipoBase):
     pass
 
@@ -47,4 +48,3 @@ class PaginatedEquipos(BaseModel):
     total_pages: int
     equipos: List[EquipoOut]
     
-
