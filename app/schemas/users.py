@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List
 
@@ -27,7 +26,6 @@ class UserEstado(BaseModel):
 class UserOut(UserBase):
     id_usuario: int
     nombre: str
-    
 
 class PaginatedUsers(BaseModel):
     page: int
