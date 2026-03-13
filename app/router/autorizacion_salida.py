@@ -159,23 +159,21 @@ def update_autorizacion(
 @router.put("/{id_salida}/estado")
 def change_autorizacion_status(
     id_salida: int,
-    nuevo_estado: bool,
+    data: AutorizacionEstado,
     db: Session = Depends(get_db),
     user_token: UserOut = Depends(get_current_user)
 ):
-
     id_rol = user_token.rol_id
     if not verify_permissions(db, id_rol, modulo, "actualizar"):
-        raise HTTPException(status_code=401, detail="Usuario no autorizado")
-
-    success = crud_autorizacion.change_autorizacion_status(
-        db, id_salida, nuevo_estado
-    )
+         raise HTTPException(status_code=401, detail="Usuario no autorizado")
+    
+    success = crud_autorizacion.change_autorizacion_status(db, id_salida,  data.estado, data.fecha_movimiento )
 
     if not success:
         raise HTTPException(status_code=404, detail="Autorización no encontrada")
 
-    return {"message": f"Estado actualizado a {nuevo_estado}"}
+    return {"message": "Estado actualizado"}
 
 
     
+
