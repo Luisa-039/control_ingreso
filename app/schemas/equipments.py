@@ -47,4 +47,8 @@ class PaginatedEquipos(BaseModel):
     total_equipements: int
     total_pages: int
     equipos: List[EquipoOut]
+<<<<<<< HEAD
     
+=======
+    
+>>>>>>> 8dafedb41e63ae3ee785a5884719c7d4c81566ae

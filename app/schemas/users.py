@@ -27,6 +27,10 @@ class UserEstado(BaseModel):
 class UserOut(UserBase):
     id_usuario: int
     nombre: str
+<<<<<<< HEAD
+=======
+    
+>>>>>>> 8dafedb41e63ae3ee785a5884719c7d4c81566ae
 
 class PaginatedUsers(BaseModel):
     page: int
@@ -34,4 +38,8 @@ class PaginatedUsers(BaseModel):
     total_users: int
     total_pages: int
     users: List[UserOut]
+<<<<<<< HEAD
     
+=======
+    
+>>>>>>> 8dafedb41e63ae3ee785a5884719c7d4c81566ae

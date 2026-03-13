@@ -4,7 +4,6 @@ from app.router import users, auth, person, sede, center, equipments, equipments
 from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],

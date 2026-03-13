@@ -119,7 +119,7 @@ def get_sedes_pag(
         skip = (page - 1) * page_size
         data = crud_sede.get_all_sede_pag(db, skip=skip, limit=page_size)
         
-        total = data["total"] 
+        total = data["total"]  
         sedes = data["sedes"] 
         
         return PaginatedSede(
