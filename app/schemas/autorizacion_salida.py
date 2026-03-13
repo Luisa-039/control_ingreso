@@ -24,7 +24,8 @@ class AutorizacionSalidaUpdate(BaseModel):
     motivo: Optional[str] = Field(default=None, min_length=3, max_length=255)
 
 class AutorizacionEstado(BaseModel):
-    estado: Optional[bool] = None
+    estado: bool
+    fecha_movimiento: datetime 
 
 class AutorizacionSalidaOut(AutorizacionSalidaBase):
     id_autorizacion: int
@@ -40,4 +41,5 @@ class PaginatedAuth_salida(BaseModel):
     total_pages: int
     auth_salida: List[AutorizacionSalidaOut]
     
+
 
