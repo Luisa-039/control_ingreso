@@ -42,20 +42,23 @@ def create_movement(db: Session, movement: MovementCreate) -> Optional[bool]:
         logger.error(f"Error al crear el movimiento: {e}")
         raise Exception("Error de base de datos al crear el movimiento")
     
-def get_movement_by_id(db: Session, id: int):
+def update_movement_by_id(db: Session, id_movimiento: int, movement_update: TipoMovimiento) -> bool:
     try:
-        query = text("""SELECT m.id_movimiento_sede, m.equipo_id, m.autorizacion_id,
-                        m.usuario_registra, m.tipo_movimiento, m.fecha_movimiento, e.serial AS serial_equipo, e.categoria, u.nombre_usuario
-                        FROM movimientos_equipos_sede m
-                        INNER JOIN equipos_sede_inv e ON m.equipo_id = e.id_equipo_sede
-                        INNER JOIN usuarios as u ON u.id_usuario = m.usuario_registra
-                     WHERE id_movimiento_sede = :id_movimiento_sede
-                     """)
-        result = db.execute(query, {"id_movimiento_sede": id}).mappings().first()
-        return result
+        query = text("""
+            UPDATE movimientos_equipos_sede
+            SET tipo_movimiento = :movimiento_eq
+            WHERE id_movimiento_sede = :id_movimiento_sede
+        """)
+        result = db.execute(query, {"movimiento_eq": movement_update.value, "id_movimiento_sede": id_movimiento})
+        db.commit()
+
+        return result.rowcount > 0
+
     except SQLAlchemyError as e:
-        logger.error(f"Error al obtener movimiento por id: {e}")
-        raise Exception("Error de base de datos al obtener el movimiento")
+        db.rollback()
+        logger.error(f"Error al cambiar el movimiento del equipo {id_movimiento}: {e}")
+        raise Exception("Error de base de datos al cambiar el movimiento del equipo")
+
     
 def get_movement_type(db:Session, tipo_movimiento: List[TipoMovimiento]):
     try:
