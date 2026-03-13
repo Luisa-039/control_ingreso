@@ -132,22 +132,46 @@ def update_autorizacion_by_id(
         raise Exception("Error de base de datos al actualizar la autorización")
 
 
-def change_autorizacion_status(db: Session, id_autorizacion: int, nuevo_estado: bool) -> bool:
+def change_autorizacion_status(db: Session, id_autorizacion: int, estado: bool, fecha_movimiento):
+
     try:
-        sentencia = text("""
+
+        update_query = text("""
             UPDATE autorizacion_salida
             SET estado = :estado
             WHERE id_autorizacion = :id_autorizacion
         """)
-        result = db.execute(sentencia, {"estado": nuevo_estado, "id_autorizacion": id_autorizacion})
+
+        db.execute(update_query, {
+            "estado": estado,
+            "id_autorizacion": id_autorizacion
+        })
+
+        # SOLO si se autoriza se crea el movimiento
+        if estado:
+
+            insert_mov = text("""
+                INSERT INTO movimientos_equipos_sede
+                (equipo_id, autorizacion_id, tipo_movimiento, usuario_registra, fecha_movimiento)
+                SELECT equipo_id, id_autorizacion, 'Salida', usuario_id_autoriza, :fecha_movimiento
+                FROM autorizacion_salida
+                WHERE id_autorizacion = :id_autorizacion
+            """)
+
+            db.execute(insert_mov, {
+                "id_autorizacion": id_autorizacion,
+                "fecha_movimiento": fecha_movimiento
+            })
+
         db.commit()
 
-        return result.rowcount > 0
+        return True
 
     except SQLAlchemyError as e:
         db.rollback()
-        logger.error(f"Error al cambiar el estado de la persona {id_autorizacion}: {e}")
-        raise Exception("Error de base de datos al cambiar el estado de la persona")
+        logger.error(f"Error al cambiar estado: {e}")
+        return False
+
     
     
 def get_all_auth_salida_pag(db: Session, skip:int = 0, limit = 10):
@@ -180,4 +204,5 @@ def get_all_auth_salida_pag(db: Session, skip:int = 0, limit = 10):
     except SQLAlchemyError as e:
         logger.error(f"Error al obtener las autorizaciones de salida: {e}", exc_info=True)
         raise Exception("Error de base de datos al obtener las autorizaciones de salida")
+
 
