@@ -10,7 +10,7 @@ class TipoMovimiento (str, Enum):
 
 class MovementBase(BaseModel):
     equipo_id: int
-    autorizacion_id: int
+    autorizacion_id: Optional[int] = None
     tipo_movimiento: TipoMovimiento
     usuario_registra: int
     fecha_movimiento: datetime
@@ -19,7 +19,7 @@ class MovementCreate(MovementBase):
     pass
 
 class MovementUpdate(BaseModel):
-    tipo_movimiento: Optional[TipoMovimiento] = None
+    tipo_movimiento: TipoMovimiento
 
 class MovementOut(MovementBase):
     id_movimiento_sede: int 
@@ -34,4 +34,3 @@ class PaginatedMovements(BaseModel):
     total_pages: int
     movements: List[MovementOut]
     
-
