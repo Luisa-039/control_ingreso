@@ -11,14 +11,13 @@ class TipoDocumento (str, Enum):
     cc = "CC"
     ti = "TI"
     ce = "CE"
-    pasaporte = "pasaporte"
+    pasaporte = "Pasaporte"
 
 class PersonBase(BaseModel):
     tipo_persona: TipoPersona
     tipo_documento: TipoDocumento
-    documento: str = Field(min_length=8, max_length=20)
-    nombre_completo: str = Field(min_length=3, max_length=50)
-    codigo_barras: Optional[str] = Field(default=None, min_length=3, max_length=100)    
+    documento: str = Field(min_length=6, max_length=20)
+    nombre_completo: str = Field(min_length=3, max_length=50)  
     fecha_registro: datetime
     estado: bool
 
@@ -26,8 +25,8 @@ class PersonCreate(PersonBase):
     pass
 
 class PersonUpdate(BaseModel):
-    tipo_persona: Optional[TipoPersona]
-    tipo_documento: Optional[TipoDocumento]
+    tipo_persona: Optional[TipoPersona] =None
+    tipo_documento: Optional[TipoDocumento] =None
     documento: Optional[str] = Field(default=None, min_length=8, max_length=20)
     nombre_completo: Optional[str] = Field(default=None, min_length=3, max_length=50)
     
@@ -36,3 +35,16 @@ class PersonEstado(BaseModel):
 
 class PersonOut(PersonBase):
     id_persona: int
+    nombre_completo: str
+    tipo_persona: str
+    tipo_documento: str
+    documento: str
+    fecha_registro: datetime
+    estado: bool
+    
+class Paginatedperson(BaseModel):
+    page: int
+    page_size: int
+    total_persons: int
+    total_pages: int
+    persons: list[PersonOut]

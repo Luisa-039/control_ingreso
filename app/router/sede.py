@@ -1,10 +1,10 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from app.crud.permisos import verify_permissions
 from app.router.dependencies import get_current_user
 from app.core.database import get_db
-from app.schemas.sede import SedeCreate, SedeUpdate, SedeOut
+from app.schemas.sede import SedeCreate, SedeUpdate, SedeOut, PaginatedSede
 from app.schemas.users import UserOut
 from app.crud import sede as crud_sede
 from sqlalchemy.exc import SQLAlchemyError
@@ -102,3 +102,33 @@ def change_sede_status(
         raise
     except Exception as e:
         raise HTTPException(status_code=500,detail=str(e)) 
+    
+    
+@router.get("/all_sedes-pag", response_model=PaginatedSede)
+def get_sedes_pag(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db),
+    user_token: UserOut = Depends(get_current_user)
+): 
+    try:        
+        id_rol = user_token.rol_id
+        if not verify_permissions(db, id_rol, modulo, 'seleccionar'):
+            raise HTTPException(status_code=401, detail="Usuario no autorizado")
+        
+        skip = (page - 1) * page_size
+        data = crud_sede.get_all_sede_pag(db, skip=skip, limit=page_size)
+        
+        total = data["total"] 
+        sedes = data["sedes"] 
+        
+        return PaginatedSede(
+            page= page,
+            page_size= page_size,
+            total_sedes= total,
+            total_pages= (total + page_size - 1) // page_size,
+            sedes= sedes
+        )
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+

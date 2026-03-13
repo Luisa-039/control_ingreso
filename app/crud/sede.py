@@ -32,7 +32,7 @@ def get_sede_by_code(db: Session, codigo: str):
         query = text("""SELECT s.id_sede, s.nombre, s.direccion, s.codigo_sede, s.centro_id, 
                      c.codigo_centro AS codigo_centro, c.nombre AS nombre_centro,
                      s.estado
-                     FROM sedes s
+                     FROM sedes as s
                      INNER JOIN centros c ON s.centro_id = c.id_centro
                      WHERE s.codigo_sede = :codigo
                 """)
@@ -99,3 +99,33 @@ def change_sede_status(db: Session, id_sede: int, nuevo_estado: bool) -> bool:
         db.rollback()
         logger.error(f"Error al cambiar el estado de la sede {id_sede}: {e}")
         raise Exception("Error de base de datos al cambiar el estado de la sede")
+    
+def get_all_sede_pag(db: Session, skip:int = 0, limit = 10):
+    """
+    Obtiene los usuarios con paginación.
+    También realizar una segunda consulta para contar total de usuarios.
+    compatible con PostgreSQL, MySQL y SQLite 
+    """
+    try: 
+        
+        count_query = text("""SELECT COUNT(id_sede) AS total 
+                     FROM sedes
+                     """)
+        total_result = db.execute(count_query).scalar()
+
+        #2 Consultar sedes
+        data_query = text("""SELECT s.id_sede, s.centro_id, s.codigo_sede, s.nombre, s.direccion, s.estado, c.nombre as nombre_centro
+                        FROM sedes as s
+                        INNER JOIN centros as c ON s.centro_id = c.id_centro
+                        LIMIT :limit OFFSET :skip
+                    """)
+        
+        cedes_list = db.execute(data_query,{"skip": skip, "limit": limit}).mappings().all()
+        
+        return {
+                "total": total_result or 0,
+                "sedes": cedes_list
+            }
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener las sedes: {e}", exc_info=True)
+        raise Exception("Error de base de datos al obtener las sedes")

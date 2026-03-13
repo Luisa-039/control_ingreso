@@ -61,9 +61,9 @@ def get_all_center(
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@router.put("/by-code/{code}")
-def update_center_by_code(
-    code: str, 
+@router.put("/by-id/{id_centro}")
+def update_center_by_id(
+    id_centro: int, 
     center: CenterUpdate, 
     db: Session = Depends(get_db),
     user_token: UserOut = Depends(get_current_user)
@@ -73,7 +73,7 @@ def update_center_by_code(
         if not verify_permissions(db, id_rol, modulo, 'actualizar'):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
         
-        success = crud_center.update_center_by_code(db, code, center)
+        success = crud_center.update_center_by_id(db, id_centro, center)
         if not success:
             raise HTTPException(status_code=400, detail="No se pudo actualizar el centro")
         return {"message": "Centro actualizado correctamente"}

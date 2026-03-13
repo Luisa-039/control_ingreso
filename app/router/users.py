@@ -1,10 +1,10 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from app.crud.permisos import verify_permissions
 from app.router.dependencies import get_current_user
 from app.core.database import get_db
-from app.schemas.users import UserCreate, UserUpdate, UserOut
+from app.schemas.users import UserCreate, UserUpdate, UserOut, PaginatedUsers
 from app.crud import users as crud_users
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -32,7 +32,7 @@ def create_user(
     
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
 @router.get("/users/by-email", response_model=UserOut)
 def get_user(
     email: str,
@@ -66,7 +66,7 @@ def get_users(
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.put("/{user_id}")
+@router.put("/by_id_user/{user_id}")
 def update_user(
     user_id: int,
     user: UserUpdate,
@@ -74,6 +74,11 @@ def update_user(
     user_token: UserOut = Depends(get_current_user)
 ):
     try:
+        id_rol=user_token.rol_id
+
+        if not verify_permissions(db, id_rol, modulo, 'actualizar'):
+            raise HTTPException(status_code=401, detail="usuario no autorizado")
+        
         success = crud_users.update_user_by_id(db, user_id, user)
         if not success:
             raise HTTPException(status_code=400, detail="No se pudo actualizar el usuario")
@@ -118,8 +123,7 @@ def get_user(
         return user
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-    
+   
 @router.put("/cambiar-estado/{user_id}", status_code=status.HTTP_200_OK)
 def change_user_status(
     user_id: int,
@@ -142,3 +146,32 @@ def change_user_status(
         raise
     except Exception as e:
         raise HTTPException(status_code=500,detail=str(e))
+    
+@router.get("/all_users-pag", response_model=PaginatedUsers)
+def get_users_pag(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db),
+    user_token: UserOut = Depends(get_current_user)
+): 
+    try:        
+        id_rol = user_token.rol_id
+        if not verify_permissions(db, id_rol, modulo, 'seleccionar'):
+            raise HTTPException(status_code=401, detail="Usuario no autorizado")
+        
+        skip = (page - 1) * page_size
+        data = crud_users.get_all_users_pag(db, skip=skip, limit=page_size)
+        
+        total = data["total"] #cambiar a total 
+        users = data["users"] #cambiar a users
+        
+        return PaginatedUsers(
+            page= page,
+            page_size= page_size,
+            total_users= total,
+            total_pages= (total + page_size - 1) // page_size,
+            users= users
+        )
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+

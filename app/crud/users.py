@@ -16,11 +16,11 @@ def create_user(db: Session, user: UserCreate) -> Optional[bool]:
         query = text("""
             INSERT INTO usuarios (
                 nombre_usuario, rol_id,
-                email, documento, telefono, pass_hash,
+                email, documento, telefono, pass_hash,sede_id,
                 estado
             ) VALUES (
                 :nombre_usuario, :rol_id,
-                :email, :documento, :telefono, :pass_hash,
+                :email, :documento, :telefono, :pass_hash, :sede_id,
                 :estado
             )
         """)
@@ -34,7 +34,7 @@ def create_user(db: Session, user: UserCreate) -> Optional[bool]:
     
 def get_user_by_email_for_login(db: Session, email: str):
     try:
-        query = text("""SELECT id_usuario, nombre_usuario, documento, usuarios.rol_id,
+        query = text("""SELECT id_usuario, nombre_usuario, documento, usuarios.rol_id, sede_id,
                 email, telefono, estado, roles.nombre, pass_hash
                      FROM usuarios 
                      INNER JOIN roles ON usuarios.rol_id = roles.id_rol
@@ -58,11 +58,11 @@ def get_user_by_email(db: Session, email: str):
     
 def get_all_user_except_admins(db: Session):
     try:
-        query = text("""SELECT id_usuario, nombre_usuario, documento, usuarios.rol_id,
-                     email, telefono, estado, pass_hash
-                     FROM usuarios 
-                     INNER JOIN roles ON usuarios.rol_id = roles.id_rol
-                     WHERE usuarios.rol_id NOT IN (1)""")
+        query = text("""SELECT u.id_usuario, u.nombre_usuario, u.documento, u.rol_id, 
+                     u.email, u.telefono, u.sede_id, u.estado, u.pass_hash, r.nombre
+                     FROM usuarios as u
+                     INNER JOIN roles as r ON u.rol_id = r.id_rol
+                     WHERE u.rol_id NOT IN (1)""")
         result = db.execute(query).mappings().all()
         return result
     except SQLAlchemyError as e:
@@ -86,7 +86,6 @@ def update_user_by_id(db: Session, user_id: int, user: UserUpdate) -> Optional[b
 
         result = db.execute(sentencia, user_data)
         db.commit()
-
         return result.rowcount > 0
     except SQLAlchemyError as e:
         db.rollback()
@@ -164,3 +163,33 @@ def change_user_status(db: Session, id_usuario: int, nuevo_estado: bool) -> bool
         db.rollback()
         logger.error(f"Error al cambiar el estado del usuario {id_usuario}: {e}")
         raise Exception("Error de base de datos al cambiar el estado del usuario")
+    
+def get_all_users_pag(db: Session, skip:int = 0, limit = 10):
+    """
+    Obtiene los usuarios con paginación.
+    También realizar una segunda consulta para contar total de usuarios.
+    compatible con PostgreSQL, MySQL y SQLite 
+    """
+    try: 
+        
+        count_query = text("""SELECT COUNT(id_usuario) AS total 
+                     FROM usuarios
+                     """)
+        total_result = db.execute(count_query).scalar()
+
+        #2 Consultar usuarios
+        data_query = text("""SELECT u.id_usuario, u.rol_id, u.nombre_usuario, u.documento, u.email, u.telefono, u.estado, u.sede_id, s.nombre
+                    FROM usuarios as u
+                    INNER JOIN sedes as s ON u.sede_id = s.id_sede
+                    WHERE rol_id != 1
+                     LIMIT :limit OFFSET :skip
+        """)
+        users_list = db.execute(data_query,{"skip": skip, "limit": limit}).mappings().all()
+        
+        return {
+                "total": total_result or 0,
+                "users": users_list
+            }
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener los usuarios: {e}", exc_info=True)
+        raise Exception("Error de base de datos al obtener los usuarios")
