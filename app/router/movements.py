@@ -101,10 +101,10 @@ def movement_serial(
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.put("/by-id/{movimiento_id}")
+@router.put("/by-id/{id_movimiento}")
 def update_movement_by_id(
-    movimiento_id: int, 
-    movement: MovementUpdate, 
+    id_movimiento: int, 
+    movement: TipoMovimiento, 
     db: Session = Depends(get_db),
     user_token: UserOut = Depends(get_current_user)
 ):
@@ -113,7 +113,7 @@ def update_movement_by_id(
         if not verify_permissions(db, id_rol, modulo, 'actualizar'):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
         
-        success = crud_movement.update_movement_by_id(db, movimiento_id, movement)
+        success = crud_movement.update_movement_by_id(db, id_movimiento, movement)
         if not success:
             raise HTTPException(status_code=400, detail="No se pudo actualizar el movimiento")
         return {"message": "Movimiento actualizado correctamente"}
