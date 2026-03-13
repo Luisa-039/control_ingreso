@@ -66,7 +66,7 @@ def get_users(
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.put("/{user_id}")
+@router.put("/by_id_user/{user_id}")
 def update_user(
     user_id: int,
     user: UserUpdate,
