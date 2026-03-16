@@ -3,48 +3,57 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 from typing import Optional, List
 
+
 class TipoEquipo_sede(str, Enum):
     portatil = "Portátil"
     pc = "PC Mesa"
     herramienta = "Herramienta"
     otro = "Otro"
 
+# Este es el modelo para el estado del equipo
 class Estado_equip_sede(str, Enum):
     disponible = "Disponible"
     mantenimiento = "Mantenimiento"
     fuera_de_sede = "Fuera_de_sede"
     inactivo = "Inactivo"
-    
+
+#Este es para crear el modelo base 
 class Equipo_sedeBase(BaseModel):
     sede_id: int
     categoria: Optional[TipoEquipo_sede] = None
     serial: Optional[str] = None
     descripcion: Optional[str] = None
-    marca_modelo: str
+    marca: str
+    modelo: str
     fecha_registro: datetime
     estado: Estado_equip_sede
     codigo_barras_equipo: Optional[str] = None
 
+#Modelo para el modelo de los equipos
 class Equipo_sedeCreate(Equipo_sedeBase):
     pass
 
+#Modelo para actualizar información de los equipo
 class Equipo_sedeUpdate(BaseModel):
     serial: Optional[str] = Field(default=None,min_length=3, max_length=255)
     descripcion: Optional[str] = Field(default=None, min_length=3)
     categoria: Optional[TipoEquipo_sede] = None
-    marca_modelo: Optional[str] = Field(default=None,min_length=3, max_length=255)
+    marca: Optional[str] = Field(default=None,min_length=3, max_length=255)
+    modelo: Optional[str] = Field(default=None,min_length=3, max_length=255)
     fecha_registro: Optional[datetime] = Field(default=None)
     sede_id: Optional[int] = Field(default=None)
 
+#Modelo para manejar los estados
 class Equipo_sedeEstado(BaseModel):
     estado: Estado_equip_sede
 
+#Modelo de salida 
 class Equipo_sedeOut(Equipo_sedeBase):
     id_equipo_sede: int
     sede_id: int
     nombre: str
    
-    
+#Modelo para la paginación  
 class PaginatedEquipos_sede(BaseModel):
     page: int
     page_size: int
