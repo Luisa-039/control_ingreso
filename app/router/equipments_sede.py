@@ -12,6 +12,7 @@ from sqlalchemy.exc import SQLAlchemyError
 router = APIRouter()
 modulo = 10
 
+#Endpoint de crear equipo
 @router.post("/crear", status_code=status.HTTP_201_CREATED)
 def create_equipo(
     Equipo: Equipo_sedeCreate, 
@@ -19,6 +20,7 @@ def create_equipo(
     user_token: UserOut = Depends(get_current_user)
 ):
     try:
+        #Verficamos que tenga permisos
         id_rol = user_token.rol_id       
         if not verify_permissions(db, id_rol, modulo, 'insertar'):
             raise HTTPException(status_code=401, detail= 'Usuario no autorizado')
@@ -27,12 +29,14 @@ def create_equipo(
         return {"message": "Equipo registrado correctamente"}
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
+#Endpoint para obtener equipo por codigo de barras    
 @router.get("/by-cod_barras",  response_model=Equipo_sedeOut)
 def scan_equipment(cod_barras: str, 
                    db: Session = Depends(get_db),
                    user_token: UserOut = Depends(get_current_user)):
     try:
+        #Verificamos que tenga permisos
         id_rol=user_token.rol_id
         if not verify_permissions(db, id_rol, modulo, 'seleccionar'):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
@@ -44,13 +48,14 @@ def scan_equipment(cod_barras: str,
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+#Endpoint para obtener el equipo por serial
 @router.get("/by-serial_eq",  response_model=Equipo_sedeOut)
 def get_by_serial_equip(serial: str, 
                         db: Session = Depends(get_db),
                         user_token: UserOut = Depends(get_current_user)):
     try:
+        #Verificamos que tenga permisos
         id_rol=user_token.rol_id
-
         if not verify_permissions(db, id_rol, modulo, 'seleccionar'):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
         
@@ -61,13 +66,14 @@ def get_by_serial_equip(serial: str,
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+#Endpoint para obtener equipos dependiendo del tipo
 @router.get("/by-tipo_equip",  response_model=Equipo_sedeOut)
 def get_by_tipo_equip(tipo_equip: TipoEquipo_sede, 
                         db: Session = Depends(get_db),
                         user_token: UserOut = Depends(get_current_user)):
     try:
+        #Verificamos permisos
         id_rol=user_token.rol_id
-
         if not verify_permissions(db, id_rol, modulo, 'seleccionar'):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
         
@@ -78,12 +84,13 @@ def get_by_tipo_equip(tipo_equip: TipoEquipo_sede,
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+#Endpoint para obtener todos los equipos de la sede
 @router.get("/all-equips_sede",  response_model=List[Equipo_sedeOut])
 def scan_equipment(db: Session = Depends(get_db),
                    user_token: UserOut = Depends(get_current_user)):
     try:
+        #Verificamos permisos
         id_rol=user_token.rol_id
-
         if not verify_permissions(db, id_rol, modulo, 'seleccionar'):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
         
@@ -94,12 +101,14 @@ def scan_equipment(db: Session = Depends(get_db),
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+#Endpoint para actualizar equipos por ID
 @router.put("/by_id/{id_equip}")
 def update_equip_by_id(id_equip: int, 
                  equip: Equipo_sedeUpdate, 
                  db: Session = Depends(get_db),
                  user_token: UserOut = Depends(get_current_user)):
     try:
+        #Verificamos permisos
         id_rol = user_token.rol_id
         if not verify_permissions(db, id_rol, modulo, 'actualizar'):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
@@ -111,6 +120,7 @@ def update_equip_by_id(id_equip: int,
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+#Endpoint para actualizar el estado del equipo
 @router.put("/estado/{id_equip}", status_code=status.HTTP_200_OK)
 def estado_equip(
     id_equip: int,
@@ -119,6 +129,7 @@ def estado_equip(
     user_token: UserOut = Depends(get_current_user)
 ):
     try:
+        #Verificamos permisos
         id_rol = user_token.rol_id
         if not verify_permissions(db, id_rol, modulo, 'actualizar'):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
@@ -131,13 +142,14 @@ def estado_equip(
     except SQLAlchemyError as e:
             raise HTTPException(status_code=500, detail=str(e))
 
+#Endpoint para actualizar equipos por medio del código de barras
 @router.put("/by-cod_barras/{codigo_barras_equip}")
-
 def update_equip(codigo_barras_equip: str, 
                  equip: Equipo_sedeUpdate, 
                  db: Session = Depends(get_db),
                  user_token: UserOut = Depends(get_current_user)):
     try:
+        #Verificamos permisos
         id_rol = user_token.rol_id
         if not verify_permissions(db, id_rol, modulo, 'actualizar'):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
@@ -149,6 +161,7 @@ def update_equip(codigo_barras_equip: str,
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+#Endpoint para la paginación
 @router.get("/all_equips-pag", response_model=PaginatedEquipos_sede)
 def get_equipements_pag(
     page: int = Query(1, ge=1),
@@ -156,7 +169,8 @@ def get_equipements_pag(
     db: Session = Depends(get_db),
     user_token: UserOut = Depends(get_current_user)
 ): 
-    try:        
+    try:
+        #Verificamos permisos        
         id_rol = user_token.rol_id
         if not verify_permissions(db, id_rol, modulo, 'seleccionar'):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
@@ -176,5 +190,3 @@ def get_equipements_pag(
         )
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
