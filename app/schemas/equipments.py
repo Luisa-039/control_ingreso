@@ -40,7 +40,6 @@ class EquipoOut(EquipoBase):
     nombre_completo: str
     persona_id: int
 
-    
 class PaginatedEquipos(BaseModel):
     page: int
     page_size: int
