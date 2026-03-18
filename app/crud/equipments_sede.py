@@ -33,11 +33,12 @@ def create_equipment_sede(db: Session,
 def get_equipment_sede_by_cod_barras(db: Session, codigo_barras: str):
     try:
         query = text("""SELECT eq.id_equipo_sede, eq.serial, eq.area_id,eq.codigo_barras_equipo, eq.descripcion,
-                          eq.categoria_id, eq.marca, eq.modelo, eq.sede_id, eq.fecha_registro,
+                          eq.categoria_id, eq.marca, eq.modelo, eq.sede_id, eq.fecha_registro,a.nombre_area,
                           eq.estado, s.nombre as nombre_sede, c.nombre_categoria
                           FROM equipos_sede_inv as eq
                           INNER JOIN sedes as s ON eq.sede_id = s.id_sede
                           INNER JOIN categorias as c ON eq.categoria_id = c.id_categoria
+                          INNER JOIN areas as a ON eq.area_id = a.id_area
                           WHERE codigo_barras_equipo = :codigo_barras""")
         result = db.execute(query, {"codigo_barras": codigo_barras}).mappings().first()
         return result
@@ -49,10 +50,11 @@ def get_equipment_sede_by_serial(db: Session, serial_eq: str):
     try:
         query = text("""SELECT eq.id_equipo_sede, eq.serial, eq.area_id,eq.codigo_barras_equipo, eq.descripcion,
                           eq.categoria_id, eq.marca, eq.modelo, eq.sede_id, eq.fecha_registro,
-                          eq.estado, s.nombre as nombre_sede, c.nombre_categoria
+                          eq.estado, s.nombre as nombre_sede, c.nombre_categoria, a.nombre_area
                           FROM equipos_sede_inv as eq
                           INNER JOIN sedes as s ON eq.sede_id = s.id_sede
                           INNER JOIN categorias as c ON eq.categoria_id = c.id_categoria
+                          INNER JOIN areas as a ON eq.area_id = a.id_area
                      WHERE serial = :equipo_serial""")
         result = db.execute(query, {"equipo_serial": serial_eq}).mappings().first()
         return result
@@ -64,10 +66,11 @@ def get_all_equipments_sede(db: Session):
     try:
         query = text("""SELECT eq.id_equipo_sede, eq.serial, eq.area_id,eq.codigo_barras_equipo, eq.descripcion,
                           eq.categoria_id, eq.marca, eq.modelo, eq.sede_id, eq.fecha_registro,
-                          eq.estado, s.nombre as nombre_sede, c.nombre_categoria
+                          eq.estado, s.nombre as nombre_sede, c.nombre_categoria, a.nombre_area
                           FROM equipos_sede_inv as eq
                           INNER JOIN sedes as s ON eq.sede_id = s.id_sede
                           INNER JOIN categorias as c ON eq.categoria_id = c.id_categoria
+                          INNER JOIN areas as a ON eq.area_id = a.id_area
                      """)
         result = db.execute(query).mappings().all()
         print([e.estado for e in result])
@@ -156,10 +159,11 @@ def get_all_equipements_sede_pag(db: Session, skip:int = 0, limit = 10):
         #2 Consultar equipos
         data_query = text("""SELECT eq.id_equipo_sede, eq.serial, eq.area_id,eq.codigo_barras_equipo, eq.descripcion,
                           eq.categoria_id, eq.marca, eq.modelo, eq.sede_id, eq.fecha_registro,
-                          eq.estado, s.nombre as nombre_sede, c.nombre_categoria
+                          eq.estado, s.nombre as nombre_sede, c.nombre_categoria, a.nombre_area
                           FROM equipos_sede_inv as eq
                           INNER JOIN sedes as s ON eq.sede_id = s.id_sede
                           INNER JOIN categorias as c ON eq.categoria_id = c.id_categoria
+                          INNER JOIN areas as a ON eq.area_id = a.id_area
                           LIMIT :limit OFFSET :skip
                         """)
         equipos_list = db.execute(data_query,{"skip": skip, "limit": limit}).mappings().all()
