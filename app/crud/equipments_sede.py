@@ -16,19 +16,11 @@ def create_equipment_sede(db: Session,
         #Realizamos la consulta en la base de datos
         query = text("""
             INSERT INTO equipos_sede_inv (
-<<<<<<< HEAD
                 sede_id, categoria_id, serial, codigo_barras_equipo, area_id,
                 descripcion, marca, modelo,
                 fecha_registro, estado
             ) VALUES (
                 :sede_id, :categoria_id, :serial, :codigo_barras_equipo, :area_id,
-=======
-                sede_id, categoria, serial, codigo_barras_equipo,
-                descripcion, marca, modelo,
-                fecha_registro, estado
-            ) VALUES (
-                :sede_id, :categoria, :serial, :codigo_barras_equipo,
->>>>>>> ace795b56b6b6a81f7d09bd0bb0098655150ee30
                 :descripcion, :marca, :modelo, :fecha_registro, :estado
             )
         """)
