@@ -36,11 +36,12 @@ def get_autorizacion_by_id(db: Session, id_autorizacion: int):
     """Obtener una autorización de salida por ID"""
     try:
         query = text("""SELECT a_s.id_autorizacion, a_s.equipo_id, a_s.usuario_id_autoriza, a_s.destino, a_s.tipo_id,
-                        a_s.motivo, a_s.fecha_autorizacion, a_s.estado, u.nombre_usuario, e.serial, t.nombre_tipo
+                        a_s.motivo, a_s.fecha_autorizacion, a_s.estado, u.nombre_usuario, e.serial, t.nombre_tipo, c.nombre_categoria
                         FROM autorizacion_salida as a_s
                         INNER JOIN usuarios as u ON u.id_usuario = a_s.usuario_id_autoriza
                         INNER JOIN equipos_sede_inv as e ON e.id_equipo_sede = a_s.equipo_id
                         INNER JOIN tipo_movimientos as t ON t.id_tipo = a_s.tipo_id
+                        INNER JOIN categorias as c ON c.id_categoria = e.categoria_id
                         WHERE id_autorizacion = :id_autorizacion
                         ORDER BY fecha_autorizacion DESC
                     """)
@@ -57,11 +58,12 @@ def get_all_autorizaciones(db: Session, skip: int = 0,   limit: int = 100
     try:
         query = text("""
                      SELECT a_s.id_autorizacion, a_s.equipo_id, a_s.usuario_id_autoriza, a_s.destino, a_s.tipo_id,
-                          a_s.motivo, a_s.fecha_autorizacion, a_s.estado, u.nombre_usuario, e.serial, t.nombre_tipo
+                          a_s.motivo, a_s.fecha_autorizacion, a_s.estado, u.nombre_usuario, e.serial, t.nombre_tipo, c.nombre_categoria
                           FROM autorizacion_salida as a_s
                           INNER JOIN usuarios as u ON u.id_usuario = a_s.usuario_id_autoriza
                           INNER JOIN equipos_sede_inv as e ON e.id_equipo_sede = a_s.equipo_id
                           INNER JOIN tipo_movimientos as t ON t.id_tipo = a_s.tipo_id
+                          INNER JOIN categorias as c ON c.id_categoria = e.categoria_id
                           ORDER BY fecha_autorizacion DESC
                      LIMIT :limit OFFSET :skip
                 """)
@@ -80,11 +82,12 @@ def get_autorizaciones_by_equipo(db: Session, equipo_id: int):
     """Obtener todas las autorizaciones de un equipo específico"""
     try:
         query = text("""SELECT a_s.id_autorizacion, a_s.equipo_id, a_s.usuario_id_autoriza, a_s.destino, a_s.tipo_id,
-                        a_s.motivo, a_s.fecha_autorizacion, a_s.estado, u.nombre_usuario, e.serial, t.nombre_tipo
+                        a_s.motivo, a_s.fecha_autorizacion, a_s.estado, u.nombre_usuario, e.serial, t.nombre_tipo, c.nombre_categoria
                         FROM autorizacion_salida as a_s
                         INNER JOIN usuarios as u ON u.id_usuario = a_s.usuario_id_autoriza
                         INNER JOIN equipos_sede_inv as e ON e.id_equipo_sede = a_s.equipo_id
                         INNER JOIN tipo_movimientos as t ON t.id_tipo = a_s.tipo_id
+                        INNER JOIN categorias as c ON c.id_categoria = e.categoria_id
                         WHERE equipo_id = :equipo_id
                         ORDER BY fecha_autorizacion DESC
                     """)
@@ -99,11 +102,12 @@ def get_autorizaciones_by_usuario(db: Session, usuario_id_autoriza: int):
     """Obtener todas las autorizaciones creadas por un usuario específico"""
     try:
         query = text("""SELECT a_s.id_autorizacion, a_s.equipo_id, a_s.usuario_id_autoriza, a_s.destino, a_s.tipo_id,
-                        a_s.motivo, a_s.fecha_autorizacion, a_s.estado, u.nombre_usuario, e.serial, t.nombre_tipo
-                        FROM autorizacion_salida as a_s
-                        INNER JOIN usuarios as u ON u.id_usuario = a_s.usuario_id_autoriza
-                        INNER JOIN equipos_sede_inv as e ON e.id_equipo_sede = a_s.equipo_id
-                        INNER JOIN tipo_movimientos as t ON t.id_tipo = a_s.tipo_id
+                          a_s.motivo, a_s.fecha_autorizacion, a_s.estado, u.nombre_usuario, e.serial, t.nombre_tipo, c.nombre_categoria
+                          FROM autorizacion_salida as a_s
+                          INNER JOIN usuarios as u ON u.id_usuario = a_s.usuario_id_autoriza
+                          INNER JOIN equipos_sede_inv as e ON e.id_equipo_sede = a_s.equipo_id
+                          INNER JOIN tipo_movimientos as t ON t.id_tipo = a_s.tipo_id
+                          INNER JOIN categorias as c ON c.id_categoria = e.categoria_id
                         WHERE usuario_id_autoriza = :usuario_id_autoriza
                         ORDER BY fecha_autorizacion DESC
                     """)
@@ -200,11 +204,12 @@ def get_all_auth_salida_pag(db: Session, skip:int = 0, limit = 10):
 
         #2 Consultar usuarios
         data_query = text("""SELECT a_s.id_autorizacion, a_s.equipo_id, a_s.usuario_id_autoriza, a_s.destino, a_s.tipo_id,
-                          a_s.motivo, a_s.fecha_autorizacion, a_s.estado, u.nombre_usuario, e.serial, t.nombre_tipo
+                          a_s.motivo, a_s.fecha_autorizacion, a_s.estado, u.nombre_usuario, e.serial, t.nombre_tipo, c.nombre_categoria
                           FROM autorizacion_salida as a_s
                           INNER JOIN usuarios as u ON u.id_usuario = a_s.usuario_id_autoriza
                           INNER JOIN equipos_sede_inv as e ON e.id_equipo_sede = a_s.equipo_id
                           INNER JOIN tipo_movimientos as t ON t.id_tipo = a_s.tipo_id
+                          INNER JOIN categorias as c ON c.id_categoria = e.categoria_id
                           ORDER BY fecha_autorizacion DESC
                           LIMIT :limit OFFSET :skip
         """)
