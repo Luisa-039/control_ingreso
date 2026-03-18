@@ -17,10 +17,10 @@ def create_autorizacion_salida(db: Session, autorizacion: AutorizacionSalidaCrea
     try:
         query = text("""
             INSERT INTO autorizacion_salida (
-                equipo_id, usuario_id_autoriza, fecha_autorizacion,
+                equipo_id, usuario_id_autoriza, tipo_id, fecha_autorizacion,
                 destino, motivo, estado
             ) VALUES (
-                :equipo_id, :usuario_id_autoriza, :fecha_autorizacion,
+                :equipo_id, :usuario_id_autoriza, :tipo_id, :fecha_autorizacion,
                 :destino, :motivo, :estado
             )
         """)
