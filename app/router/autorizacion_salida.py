@@ -9,6 +9,7 @@ from app.schemas.autorizacion_salida import (
     AutorizacionSalidaCreate,
     AutorizacionSalidaUpdate,
     AutorizacionSalidaOut,
+    AutorizacionEstado,
     PaginatedAuth_salida
 )
 from app.crud import autorizacion_salida as crud_autorizacion
@@ -17,7 +18,7 @@ router = APIRouter()
 modulo = 12
 
 # Crear autorización
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("/create", status_code=status.HTTP_201_CREATED)
 def create_autorizacion_salida(
     autorizacion: AutorizacionSalidaCreate,
     db: Session = Depends(get_db),
@@ -167,7 +168,7 @@ def change_autorizacion_status(
     if not verify_permissions(db, id_rol, modulo, "actualizar"):
          raise HTTPException(status_code=401, detail="Usuario no autorizado")
     
-    success = crud_autorizacion.change_autorizacion_status(db, id_salida,  data.estado, data.fecha_movimiento )
+    success = crud_autorizacion.change_autorizacion_status(db, id_salida, data.estado, data.fecha_movimiento )
 
     if not success:
         raise HTTPException(status_code=404, detail="Autorización no encontrada")
@@ -176,4 +177,3 @@ def change_autorizacion_status(
 
 
     
-

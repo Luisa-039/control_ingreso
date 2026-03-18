@@ -24,11 +24,24 @@ def create_center(
         id_rol = user_token.rol_id             
         if not verify_permissions(db, id_rol, modulo, 'insertar'):
             raise HTTPException(status_code=401, detail= 'Usuario no autorizado')
-        crud_access.registro_acceso(db=db,
-                                    cod_barras=cod_barras_p,
-                                    access=registro_acc,
-                                    usuario_id = id_rol
-                                    )
+        resultado = crud_access.registro_acceso(db=db,
+                                                cod_barras=cod_barras_p,
+                                                access=registro_acc,
+                                                usuario_id = id_rol
+                                                )
+
+        if resultado == "person_not_found":
+            raise HTTPException(status_code=404, detail="Persona no encontrada en el sistema")
+
+        if resultado == "active_access_exists":
+            raise HTTPException(
+                status_code=409,
+                detail="La persona ya tiene un ingreso activo. Debe registrar salida antes de un nuevo ingreso.",
+            )
+
+        if resultado != "ok":
+            raise HTTPException(status_code=400, detail="No fue posible registrar el ingreso")
+
         return {"message": "registro creado correctamente"}
     
     except SQLAlchemyError as e:
@@ -97,8 +110,6 @@ def check_out_equipo(
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-#Consultar por id de acceso
-
 @router.get("/registro_by_id", response_model=AccessOut)
 def consulta_by_id_access( id_registro: int,
     db: Session = Depends(get_db),
@@ -116,24 +127,6 @@ def consulta_by_id_access( id_registro: int,
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/consult_by_doc_person", response_model=list[AccessOut])
-def consulta_by_doc_person( documento_p: str,
-    db: Session = Depends(get_db),
-    user_token: UserOut = Depends(get_current_user)
-):
-    try:
-        id_rol = user_token.rol_id             
-        if not verify_permissions(db, id_rol, modulo, 'seleccionar'):
-            raise HTTPException(status_code=401, detail= 'Usuario no autorizado')
-        
-        registro_ext = crud_access.get_access_by_documento(db, documento_p)
-        if not registro_ext:
-            raise HTTPException(status_code=404, detail="registro no encontrado")
-        return registro_ext
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail=str(e))
- 
- 
 @router.get("/consult_by_id_equipo", response_model=list[AccessOut])
 def consulta_by_doc_person( id_equip: int,
     db: Session = Depends(get_db),
@@ -169,30 +162,30 @@ def consulta_by_doc_person(
         raise HTTPException(status_code=500, detail=str(e))
  
 #Modo manual, si la pistola falla
-@router.post("/crear-by_document_person", status_code=status.HTTP_201_CREATED)
-def create_center(  
-    registro_acc: AccessCreate,
-    documento_p: str,
-    db: Session = Depends(get_db),
-    user_token: UserOut = Depends(get_current_user)
-):
-    try:
-        id_rol = user_token.rol_id             
-        if not verify_permissions(db, id_rol, modulo, 'insertar'):
-            raise HTTPException(status_code=401, detail= 'Usuario no autorizado')
-        crud_access.registro_acceso(db,
-                                    documento_p,
-                                    registro_acc,
-                                    id_rol
-                                    )
-        return {"message": "registro creado correctamente"}
+# @router.post("/crear-by_document_person", status_code=status.HTTP_201_CREATED)
+# def create_center(  
+#     registro_acc: AccessCreate,
+#     documento_p: str,
+#     db: Session = Depends(get_db),
+#     user_token: UserOut = Depends(get_current_user)
+# ):
+#     try:
+#         id_rol = user_token.rol_id             
+#         if not verify_permissions(db, id_rol, modulo, 'insertar'):
+#             raise HTTPException(status_code=401, detail= 'Usuario no autorizado')
+#         crud_access.registro_acceso(db,
+#                                     documento_p,
+#                                     registro_acc,
+#                                     id_rol
+#                                     )
+#         return {"message": "registro creado correctamente"}
     
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+#     except SQLAlchemyError as e:
+#         raise HTTPException(status_code=500, detail=str(e))
 
 #Actualizar la fecha de salida de la persona a través del scan del equipo
-@router.post("/asociar_equipo_serial", status_code=status.HTTP_201_CREATED)
-def asoc_equip(serial_eq: str,
+@router.post("/asociar_equipo_codBarras", status_code=status.HTTP_201_CREATED)
+def asoc_equip(cod_barras: str,
     db: Session = Depends(get_db),
     user_token: UserOut = Depends(get_current_user)
 ):
@@ -201,7 +194,7 @@ def asoc_equip(serial_eq: str,
         if not verify_permissions(db, id_rol, modulo, 'insertar'):
             raise HTTPException(status_code=401, detail= 'Usuario no autorizado')
         
-        resultado = crud_access.asociar_equipo_by_serial(db, serial_eq)
+        resultado = crud_access.asociar_equipo_by_serial(db, cod_barras)
         
         if resultado:
             return {"message": "Equipo asociado al registro correctamente"}
@@ -232,7 +225,7 @@ def check_out_person_document(
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.put("/salida_equip_serial")
+@router.put("/salida_equip_codBarras")
 def check_out_equipo_serial(
     cod_barras_equipo: str,
     db: Session = Depends(get_db),
@@ -282,4 +275,4 @@ def get_access_pag(
         access=access,
     )
 
-    
+

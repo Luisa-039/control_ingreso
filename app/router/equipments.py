@@ -7,7 +7,7 @@ from app.core.database import get_db
 from app.crud.permisos import verify_permissions
 from app.router.dependencies import get_current_user
 from app.schemas.users import UserOut
-from app.schemas.equipments import EquipoCreate, EquipoUpdate, EquipoOut, TipoEquipo, PaginatedEquipos
+from app.schemas.equipments import EquipoCreate, EquipoUpdate, EquipoOut, PaginatedEquipos
 from app.crud import equipments as crud_equipments
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -17,7 +17,7 @@ modulo = 7
 @router.post("/crear", status_code=status.HTTP_201_CREATED)
 def create_equipo(
     persona_id: int = Form(...),
-    tipo_equipo: str = Form(...),
+    categoria_id: int = Form(...),
     serial: str = Form(...),
     marca_modelo: str = Form(...),
     descripcion: str = Form(...),
@@ -45,7 +45,7 @@ def create_equipo(
 
         equipo_data = EquipoCreate(
             persona_id=persona_id,
-            tipo_equipo=tipo_equipo,
+            categoria_id=categoria_id,
             serial=serial,
             marca_modelo=marca_modelo,
             descripcion=descripcion,
@@ -93,7 +93,7 @@ def get_by_serial_equip(serial: str,
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/by-tipo_equip",  response_model=EquipoOut)
-def get_by_tipo_equip(tipo_equip: TipoEquipo, 
+def get_by_tipo_equip(tipo_equip: int, 
                         db: Session = Depends(get_db),
                         user_token: UserOut = Depends(get_current_user)):
     try:

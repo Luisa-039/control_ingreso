@@ -3,12 +3,6 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 from typing import Optional, List
 
-class TipoEquipo_sede(str, Enum):
-    portatil = "Portátil"
-    pc = "PC Mesa"
-    herramienta = "Herramienta"
-    otro = "Otro"
-
 class Estado_equip_sede(str, Enum):
     disponible = "Disponible"
     mantenimiento = "Mantenimiento"
@@ -17,10 +11,12 @@ class Estado_equip_sede(str, Enum):
     
 class Equipo_sedeBase(BaseModel):
     sede_id: int
-    categoria: Optional[TipoEquipo_sede] = None
+    categoria_id: int
     serial: Optional[str] = None
     descripcion: Optional[str] = None
-    marca_modelo: str
+    marca: str
+    modelo: str
+    area_id:int
     fecha_registro: datetime
     estado: Estado_equip_sede
     codigo_barras_equipo: Optional[str] = None
@@ -31,8 +27,10 @@ class Equipo_sedeCreate(Equipo_sedeBase):
 class Equipo_sedeUpdate(BaseModel):
     serial: Optional[str] = Field(default=None,min_length=3, max_length=255)
     descripcion: Optional[str] = Field(default=None, min_length=3)
-    categoria: Optional[TipoEquipo_sede] = None
-    marca_modelo: Optional[str] = Field(default=None,min_length=3, max_length=255)
+    categoria_id: Optional[int] = Field(default=None)
+    area_id: Optional[int] = Field(default=None)
+    marca: Optional[str] = Field(default=None,min_length=3, max_length=255)
+    modelo: Optional[str] = Field(default=None,min_length=3, max_length=255)
     fecha_registro: Optional[datetime] = Field(default=None)
     sede_id: Optional[int] = Field(default=None)
 
@@ -42,7 +40,7 @@ class Equipo_sedeEstado(BaseModel):
 class Equipo_sedeOut(Equipo_sedeBase):
     id_equipo_sede: int
     sede_id: int
-    nombre: str
+    nombre_sede: str
    
     
 class PaginatedEquipos_sede(BaseModel):

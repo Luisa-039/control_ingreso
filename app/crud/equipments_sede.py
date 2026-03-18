@@ -4,7 +4,7 @@ from typing import Optional
 from sqlalchemy.exc import SQLAlchemyError
 import logging
 
-from app.schemas.equipments_sede import Equipo_sedeCreate, Equipo_sedeUpdate, TipoEquipo_sede, Estado_equip_sede
+from app.schemas.equipments_sede import Equipo_sedeCreate, Equipo_sedeUpdate, Estado_equip_sede
 
 logger = logging.getLogger(__name__)
 
@@ -14,12 +14,12 @@ def create_equipment_sede(db: Session,
     try:
         query = text("""
             INSERT INTO equipos_sede_inv (
-                sede_id, categoria, serial, codigo_barras_equipo,
-                descripcion, marca_modelo,
+                sede_id, categoria_id, serial, codigo_barras_equipo, area_id,
+                descripcion, marca, modelo,
                 fecha_registro, estado
             ) VALUES (
-                :sede_id, :categoria, :serial, :codigo_barras_equipo,
-                :descripcion, :marca_modelo, :fecha_registro, :estado
+                :sede_id, :categoria_id, :serial, :codigo_barras_equipo, :area_id,
+                :descripcion, :marca, :modelo, :fecha_registro, :estado
             )
         """)
         db.execute(query, equipo_sede.model_dump())
@@ -32,11 +32,13 @@ def create_equipment_sede(db: Session,
 
 def get_equipment_sede_by_cod_barras(db: Session, codigo_barras: str):
     try:
-        query = text("""SELECT *
-                     FROM equipos_sede_inv 
-                     WHERE codigo_barras_equipo = :codigo_barras""")
+        query = text("""SELECT eq.id_equipo_sede, eq.serial, eq.area_id,eq.codigo_barras_equipo, eq.descripcion,
+                          eq.categoria_id, eq.marca, eq.modelo, eq.sede_id, eq.fecha_registro,
+                          eq.estado, s.nombre as nombre_sede
+                          FROM equipos_sede_inv as eq
+                          INNER JOIN sedes as s ON eq.sede_id = s.id_sede
+                          WHERE codigo_barras_equipo = :codigo_barras""")
         result = db.execute(query, {"codigo_barras": codigo_barras}).mappings().first()
-        print([e.estado for e in result])
         return result
     except SQLAlchemyError as e:
         logger.error(f"Error al obtener equipo por código de barras: {e}")
@@ -44,9 +46,11 @@ def get_equipment_sede_by_cod_barras(db: Session, codigo_barras: str):
 
 def get_equipment_sede_by_serial(db: Session, serial_eq: str):
     try:
-        query = text("""SELECT *, s.nombre
-                    FROM equipos_sede_inv as eq
-                    INNER JOIN sedes as s ON eq.sede_id = s.id_sede
+        query = text("""SELECT eq.id_equipo_sede, eq.serial, eq.area_id,eq.codigo_barras_equipo, eq.descripcion,
+                          eq.categoria_id, eq.marca, eq.modelo, eq.sede_id, eq.fecha_registro,
+                          eq.estado, s.nombre as nombre_sede
+                          FROM equipos_sede_inv as eq
+                          INNER JOIN sedes as s ON eq.sede_id = s.id_sede
                      WHERE serial = :equipo_serial""")
         result = db.execute(query, {"equipo_serial": serial_eq}).mappings().first()
         return result
@@ -56,9 +60,11 @@ def get_equipment_sede_by_serial(db: Session, serial_eq: str):
 
 def get_all_equipments_sede(db: Session):
     try:
-        query = text("""SELECT eq.*, s.nombre
-                    FROM equipos_sede_inv as eq
-                    INNER JOIN sedes as s ON eq.sede_id = s.id_sede 
+        query = text("""SELECT eq.id_equipo_sede, eq.serial, eq.area_id,eq.codigo_barras_equipo, eq.descripcion,
+                          eq.categoria_id, eq.marca, eq.modelo, eq.sede_id, eq.fecha_registro,
+                          eq.estado, s.nombre as nombre_sede
+                          FROM equipos_sede_inv as eq
+                          INNER JOIN sedes as s ON eq.sede_id = s.id_sede
                      """)
         result = db.execute(query).mappings().all()
         print([e.estado for e in result])
@@ -131,18 +137,6 @@ def update_equip_sede_by_id(db: Session, equipo_id: int, equipment: Equipo_sedeU
         logger.error(f"Error al actualizar el id del equipo {equipo_id}: {e}")
         raise Exception("Error de base de datos al actualizar el id del equipo")
      
-def get_equipment_sede_by_tipo(db: Session, tipo_equip: TipoEquipo_sede):
-    try:
-        query = text("""SELECT *s.nombre
-                     FROM equipos_sede_inv as eq 
-                     INNER JOIN sedes as s ON eq.sede_id = s.id_sede
-                     WHERE categoria = :equipo_tipo""")
-        result = db.execute(query, {"equipo_tipo": tipo_equip}).mappings().first()
-        return result
-    except SQLAlchemyError as e:
-        logger.error(f"Error al obtener equipo por id: {e}")
-        raise Exception("Error de base de datos al obtener el equipo por id")
-
 def get_all_equipements_sede_pag(db: Session, skip:int = 0, limit = 10):
     """
     Obtiene los equipos con paginación.
@@ -157,9 +151,9 @@ def get_all_equipements_sede_pag(db: Session, skip:int = 0, limit = 10):
         total_result = db.execute(count_query).scalar()
 
         #2 Consultar equipos
-        data_query = text("""SELECT eq.id_equipo_sede, eq.serial, eq.codigo_barras_equipo, eq.descripcion,
-                          eq.categoria, eq.marca_modelo, eq.sede_id, eq.fecha_registro,
-                          eq.estado, s.nombre
+        data_query = text("""SELECT eq.id_equipo_sede, eq.serial, eq.area_id,eq.codigo_barras_equipo, eq.descripcion,
+                          eq.categoria_id, eq.marca, eq.modelo, eq.sede_id, eq.fecha_registro,
+                          eq.estado, s.nombre as nombre_sede
                           FROM equipos_sede_inv as eq
                           INNER JOIN sedes as s ON eq.sede_id = s.id_sede
                           LIMIT :limit OFFSET :skip

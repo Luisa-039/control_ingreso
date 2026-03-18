@@ -28,8 +28,4 @@ class PaginatedSede(BaseModel):
     page_size: int
     total_sedes: int
     total_pages: int
-<<<<<<< HEAD
     sedes: List[SedeOut]
-=======
-    sedes: List[SedeOut]
->>>>>>> 8dafedb41e63ae3ee785a5884719c7d4c81566ae

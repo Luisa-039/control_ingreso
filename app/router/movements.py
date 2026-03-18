@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.crud.permisos import verify_permissions
 from app.router.dependencies import get_current_user
 from app.core.database import get_db
-from app.schemas.movements import MovementCreate, MovementUpdate, MovementOut, TipoMovimiento, PaginatedMovements
+from app.schemas.movements import MovementCreate, MovementUpdate, MovementOut, PaginatedMovements
 from app.schemas.users import UserOut
 from app.crud import movements as crud_movement
 from sqlalchemy.exc import SQLAlchemyError
@@ -46,25 +46,7 @@ def get_movement_by_id(
         return movimiento
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
-@router.get("/by-type", response_model=List[MovementOut])
-def get_movement_type(
-    tipo_movimiento: TipoMovimiento,
-    db: Session = Depends(get_db),
-    user_token: UserOut = Depends(get_current_user)
-):
-    try:
-        id_rol=user_token.rol_id
 
-        if not verify_permissions(db, id_rol, modulo, 'seleccionar'):
-            raise HTTPException(status_code=401, detail="usuario no autorizado")
-
-        tipo_movimiento = crud_movement.get_movement_type(db, tipo_movimiento)
-        if not tipo_movimiento:
-            raise HTTPException(status_code=404, detail="Movimiento no encontrado")
-        return tipo_movimiento
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail=str(e))
     
 @router.get("/all-movements",  response_model=List[MovementOut])
 def all_movements(db: Session = Depends(get_db),
@@ -104,7 +86,7 @@ def movement_serial(
 @router.put("/by-id/{id_movimiento}")
 def update_movement_by_id(
     id_movimiento: int, 
-    movement: TipoMovimiento, 
+    movement: int, 
     db: Session = Depends(get_db),
     user_token: UserOut = Depends(get_current_user)
 ):

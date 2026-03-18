@@ -7,9 +7,10 @@ class AutorizacionSalidaBase(BaseModel):
     equipo_id: int
     usuario_id_autoriza: int
     fecha_autorizacion: datetime
+    tipo_id: int
     destino: str = Field(min_length=3, max_length=50)
     motivo: str = Field(min_length=3, max_length=255)
-    estado: bool
+    estado: bool = Field(default=False)
 
 
 class AutorizacionSalidaCreate(AutorizacionSalidaBase):
@@ -29,10 +30,9 @@ class AutorizacionEstado(BaseModel):
 
 class AutorizacionSalidaOut(AutorizacionSalidaBase):
     id_autorizacion: int
-    usuario_id_autoriza: int
-    serial:str
-    categoria:str
     nombre_usuario: str
+    serial: str
+    nombre_tipo: str
     
 class PaginatedAuth_salida(BaseModel):
     page: int
@@ -41,5 +41,3 @@ class PaginatedAuth_salida(BaseModel):
     total_pages: int
     auth_salida: List[AutorizacionSalidaOut]
     
-
-

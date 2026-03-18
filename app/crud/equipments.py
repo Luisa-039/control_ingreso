@@ -4,7 +4,7 @@ from typing import Optional
 from sqlalchemy.exc import SQLAlchemyError
 import logging
 
-from app.schemas.equipments import EquipoCreate, EquipoUpdate, TipoEquipo
+from app.schemas.equipments import EquipoCreate, EquipoUpdate
 
 logger = logging.getLogger(__name__)
 
@@ -15,10 +15,10 @@ def create_equipment(db: Session,
         query = text("""
             INSERT INTO equipos_externos (
                 serial,
-                descripcion, tipo_equipo, foto_path, marca_modelo,
+                descripcion, categoria_id, foto_path, marca_modelo,
                 fecha_registro, codigo_barras_inv, estado, persona_id
             ) VALUES (
-                :serial, :descripcion, :tipo_equipo, :foto_path,
+                :serial, :descripcion, :categoria_id, :foto_path,
                 :marca_modelo, :fecha_registro, :codigo_barras_inv, :estado, :persona_id
             )
         """)
@@ -130,11 +130,11 @@ def update_equip_by_id(db: Session, equipo_id: int, equipment: EquipoUpdate) -> 
         logger.error(f"Error al actualizar el id del equipo {equipo_id}: {e}")
         raise Exception("Error de base de datos al actualizar el id del equipo")
      
-def get_equipment_by_tipo(db: Session, tipo_equip: TipoEquipo):
+def get_equipment_by_tipo(db: Session, tipo_equip: int):
     try:
         query = text("""SELECT *
                      FROM equipos_externos 
-                     WHERE tipo_equipo = :equipo_tipo""")
+                     WHERE categoria_id = :equipo_tipo""")
         result = db.execute(query, {"equipo_tipo": tipo_equip}).mappings().first()
         return result
     except SQLAlchemyError as e:
@@ -156,7 +156,7 @@ def get_all_equipements_pag(db: Session, skip:int = 0, limit = 10):
 
         #2 Consultar equipos
         data_query = text("""SELECT eq.id_equipo, eq.serial, eq.codigo_barras_inv, eq.descripcion,
-                          eq.tipo_equipo, eq.foto_path, eq.marca_modelo, eq.persona_id, eq.fecha_registro,
+                          eq.categoria_id, eq.foto_path, eq.marca_modelo, eq.persona_id, eq.fecha_registro,
                           p.nombre_completo as nombre_completo, eq.estado
                     FROM equipos_externos as eq
                     INNER JOIN personas as p ON eq.persona_id = p.id_persona

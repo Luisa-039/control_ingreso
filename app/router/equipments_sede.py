@@ -5,7 +5,7 @@ from app.core.database import get_db
 from app.crud.permisos import verify_permissions
 from app.router.dependencies import get_current_user
 from app.schemas.users import UserOut
-from app.schemas.equipments_sede import Equipo_sedeCreate, Equipo_sedeUpdate, Equipo_sedeOut, TipoEquipo_sede, Estado_equip_sede, PaginatedEquipos_sede
+from app.schemas.equipments_sede import Equipo_sedeCreate, Equipo_sedeUpdate, Equipo_sedeOut, Estado_equip_sede, PaginatedEquipos_sede
 from app.crud import equipments_sede as crud_equipments_sede
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -55,23 +55,6 @@ def get_by_serial_equip(serial: str,
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
         
         equipo = crud_equipments_sede.get_equipment_sede_by_serial(db, serial)
-        if not equipo:
-            raise HTTPException(status_code=404, detail="Equipo no encontrado")
-        return equipo
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/by-tipo_equip",  response_model=Equipo_sedeOut)
-def get_by_tipo_equip(tipo_equip: TipoEquipo_sede, 
-                        db: Session = Depends(get_db),
-                        user_token: UserOut = Depends(get_current_user)):
-    try:
-        id_rol=user_token.rol_id
-
-        if not verify_permissions(db, id_rol, modulo, 'seleccionar'):
-            raise HTTPException(status_code=401, detail="Usuario no autorizado")
-        
-        equipo = crud_equipments_sede.get_equipment_sede_by_tipo(db, tipo_equip)
         if not equipo:
             raise HTTPException(status_code=404, detail="Equipo no encontrado")
         return equipo

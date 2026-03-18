@@ -3,16 +3,11 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
-
-class TipoEquipo(str, Enum):
-    computador = "Computador"
-    herramienta = "Herramienta"
-    otro = "Otro"
-    
+# Definición de modelos Pydantic para equipos
 class EquipoBase(BaseModel):
     serial: Optional[str] = None
     descripcion: str
-    tipo_equipo: Optional[TipoEquipo] = None
+    categoria_id: int
     foto_path: Optional[str]
     marca_modelo: str
     persona_id: int
@@ -23,32 +18,31 @@ class EquipoBase(BaseModel):
 class EquipoCreate(EquipoBase):
     pass
 
+#Requisitos para actualizar un equipo, todos los campos son opcionales
 class EquipoUpdate(BaseModel):
     serial: Optional[str] = Field(default=None,min_length=3, max_length=255)
     descripcion: Optional[str] = Field(default=None, min_length=3)
-    tipo_equipo: Optional[TipoEquipo] = None
+    categoria_id: Optional[int] = None
     foto_path: Optional[str] = Field(default=None, min_length=3, max_length=255)
     marca_modelo: Optional[str] = Field(default=None,min_length=3, max_length=255)
     fecha_registro: Optional[datetime] = Field(default=None)
     persona_id: Optional[int] = Field(default=None)
 
+# Solo se puede actualizar el estado del equipo
 class EquipoEstado(BaseModel):
     estado: Optional[bool] = None
 
+# Modelo de salida para un equipo, incluye el ID y el nombre completo de la persona asociada
 class EquipoOut(EquipoBase):
     id_equipo: int
     nombre_completo: str
     persona_id: int
 
-    
+# Modelo para la paginación de equipos, incluye información sobre la página actual, el tamaño de página, el total de equipos, 
+# el total de páginas y la lista de equipos en la página actual
 class PaginatedEquipos(BaseModel):
     page: int
     page_size: int
     total_equipements: int
     total_pages: int
     equipos: List[EquipoOut]
-<<<<<<< HEAD
-    
-=======
-    
->>>>>>> 8dafedb41e63ae3ee785a5884719c7d4c81566ae

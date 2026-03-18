@@ -1,17 +1,11 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional, List
-from enum import Enum
 
-class TipoMovimiento (str, Enum):
-    entrada = "Entrada"
-    salida = "Salida"
-    traslado = "Traslado"
 
 class MovementBase(BaseModel):
-    equipo_id: int
     autorizacion_id: Optional[int] = None
-    tipo_movimiento: TipoMovimiento
+    tipo_id: int
     usuario_registra: int
     fecha_movimiento: datetime
 
@@ -19,12 +13,13 @@ class MovementCreate(MovementBase):
     pass
 
 class MovementUpdate(BaseModel):
-    tipo_movimiento: TipoMovimiento
+    tipo_id: Optional[int] = None
 
 class MovementOut(MovementBase):
     id_movimiento_sede: int 
     serial_equipo:str
-    categoria:str
+    categoria_id:int
+    nombre_categoria:str
     nombre_usuario: str
     
 class PaginatedMovements(BaseModel):

@@ -13,10 +13,11 @@ def create_center(db: Session, centro: CenterCreate) -> Optional[bool]:
         query = text("""
             INSERT INTO centros (
                 codigo_centro, nombre, 
+                ciudad_id,
                 estado
             ) VALUES (
                 :codigo_centro, :nombre,
-                :estado
+                :ciudad_id, :estado
             )
         """)
         db.execute(query, centro.model_dump())
@@ -29,7 +30,7 @@ def create_center(db: Session, centro: CenterCreate) -> Optional[bool]:
     
 def get_center_by_code(db: Session, codigo: str):
     try:
-        query = text("""SELECT id_centro, codigo_centro, nombre,
+        query = text("""SELECT id_centro, codigo_centro, ciudad_id, nombre,
                      estado
                      FROM centros
                      WHERE codigo_centro = :codigo
@@ -44,7 +45,7 @@ def get_center_by_code(db: Session, codigo: str):
 def get_all_center(db: Session):
     try:
         query = text("""
-            SELECT id_centro, codigo_centro, nombre,
+            SELECT id_centro, codigo_centro, ciudad_id, nombre,
             estado
             FROM centros
         """)
@@ -95,3 +96,4 @@ def change_center_status(db: Session, id_centro: int, nuevo_estado: bool) -> boo
         db.rollback()
         logger.error(f"Error al cambiar el estado del centro {id_centro}: {e}")
         raise Exception("Error de base de datos al cambiar el estado del centro")
+

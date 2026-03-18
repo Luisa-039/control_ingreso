@@ -35,7 +35,7 @@ def create_user(db: Session, user: UserCreate) -> Optional[bool]:
 def get_user_by_email_for_login(db: Session, email: str):
     try:
         query = text("""SELECT id_usuario, nombre_usuario, documento, usuarios.rol_id, sede_id,
-                email, telefono, estado, roles.nombre, pass_hash
+                email, telefono, usuarios.estado, roles.nombre, pass_hash
                      FROM usuarios 
                      INNER JOIN roles ON usuarios.rol_id = roles.id_rol
                      WHERE email = :correo""")
