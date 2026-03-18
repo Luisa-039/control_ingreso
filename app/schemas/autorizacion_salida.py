@@ -33,6 +33,7 @@ class AutorizacionSalidaOut(AutorizacionSalidaBase):
     nombre_usuario: str
     serial: str
     nombre_tipo: str
+    nombre_categoria: str
     
 class PaginatedAuth_salida(BaseModel):
     page: int
