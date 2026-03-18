@@ -28,6 +28,7 @@ class AccesUpdate(AccessBase):
 class AccessOut(AccessBase):
     id_acceso: int
     fecha_salida: Optional[datetime] = None
+    nombre_area: Optional[str] = None
     
 class PaginatedAccess(BaseModel):
     page: int

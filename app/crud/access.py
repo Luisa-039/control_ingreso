@@ -39,13 +39,16 @@ def _extract_document_number(scanned_value: str) -> str:
     return max(candidates, key=len)
 
 #registrar usuario sin equipo por scan
-def registro_acceso(db:Session, cod_barras:str, access: AccessCreate, usuario_id: int)->str:
+def registro_acceso(db:Session, cod_barras:str, area_id_s: int, access: AccessCreate, usuario_id: int)->str:
     
     try:
         numero_documento = _extract_document_number(cod_barras)
 
-        persona_query = text("""
-                                SELECT p.id_persona, p.documento 
+        if not area_id_s or area_id_s <= 0:
+            logger.warning("Ingreso bloqueado. Debe especificar el area de visita")
+            return "area_required"
+
+        persona_query = text("""SELECT p.id_persona, p.documento 
                                 FROM personas as p WHERE p.documento = :cod_barras
                                 """)
         result_persona = db.execute(persona_query, {"cod_barras": numero_documento}).mappings().first()
@@ -62,6 +65,7 @@ def registro_acceso(db:Session, cod_barras:str, access: AccessCreate, usuario_id
                                 ORDER BY fecha_entrada DESC
                                 LIMIT 1
                                 """)
+        
         acceso_activo = db.execute(
             validar_activo_query, {"persona_id": result_persona["id_persona"]}
         ).mappings().first()
@@ -71,6 +75,16 @@ def registro_acceso(db:Session, cod_barras:str, access: AccessCreate, usuario_id
                 f"Ingreso bloqueado. Persona con documento {numero_documento} ya tiene acceso activo"
             )
             return "active_access_exists"
+
+        area_query = text("""SELECT id_area FROM areas
+                        WHERE id_area = :id_area_s
+                        """)
+        area_result = db.execute( area_query, {"id_area_s": area_id_s}
+        ).mappings().first()
+
+        if not area_result:
+            logger.warning(f"Area de visita no encontrada: {area_id_s}")
+            return "area_not_found"
 
         sede_query = text("""
         SELECT sede_id
@@ -94,14 +108,15 @@ def registro_acceso(db:Session, cod_barras:str, access: AccessCreate, usuario_id
                                 )
                             """)
         params = {
-            **access.model_dump(),
+             **access.model_dump(),
             "sede_id": sede_result["sede_id"],
             "persona_id": result_persona["id_persona"],
             "equipo_id": None,
             "usuario_registro_id": usuario_id,
-            "area_id": None
+            "area_id": area_result["id_area"],
+            "tipo_movimiento": True,
         }
-
+        
         db.execute(access_query, params)
         db.commit()
         
@@ -159,67 +174,13 @@ def asociar_equipo(db:Session, cod_barras:str):
         logger.error(f"Error al asociar el equipo: {e}")
         raise Exception("Error de base de datos al asociar el equipo")
 
-#registrar persona por documento si la pistola falla
-# def registro_acceso_by_doc(db:Session, doc_persona:str, access: AccessCreate, usuario_id: int)->bool:
-    
-#     try:
-#         persona_query = text("""
-#                                 SELECT p.id_persona, p.documento 
-#                                 FROM personas as p WHERE p.documento = :doc_person
-#                                 """)
-#         result_persona = db.execute(persona_query, {"doc_person": doc_persona}).mappings().first()
-        
-#         if not result_persona:
-#             logger.warning("Persona no encontrada en el sistema")
-#             return False
-
-#         sede_query = text("""
-#         SELECT sede_id
-#         FROM usuarios
-#         WHERE id_usuario = :id_user
-#         """)
-#         sede_result = db.execute(
-#             sede_query, {"id_user": usuario_id}
-#         ).mappings().first()
-            
-#         access_query = text("""
-#                             INSERT INTO registro_accesos(
-#                                 sede_id, persona_id, equipo_id,
-#                                 usuario_registro_id, area_id,
-#                                 tipo_movimiento, fecha_entrada
-#                                 ) 
-#                                 VALUES(
-#                                 :sede_id, :persona_id, :equipo_id,
-#                                 :usuario_registro_id, :area_id,
-#                                 :tipo_movimiento, :fecha_entrada
-#                                 )
-#                             """)
-#         params = {
-#             **access.model_dump(),
-#             "sede_id": sede_result["sede_id"],
-#             "persona_id": result_persona["id_persona"],
-#             "equipo_id": None,
-#             "area_id": None,
-#             "usuario_registro_id": usuario_id
-#         }
-
-#         db.execute(access_query, params)
-#         db.commit()
-        
-#         return True
-
-#     except SQLAlchemyError as e:
-#         db.rollback()
-#         logger.error(f"Error al realizar el registro de acceso: {e}")
-#         raise Exception("Error de base de datos al realizar el registro de acceso") 
-
 #registrar por serial si la pistola falla
 def asociar_equipo_by_serial(db:Session, serial_equip:str):
     try: 
         datos_equip_query = text("""
                                  SELECT id_equipo, persona_id
                                  FROM equipos_externos
-                                 WHERE codigo_barras_inv = :serial_equip
+                                 WHERE serial = :serial_equip
                                  """)
 
         equipo_result = db.execute(
@@ -352,50 +313,13 @@ def check_out_equip(db:Session, cod_barras_equip:str):
             logger.error(f"Error al realizar el registro de salida: {e}")
             raise Exception("Error de base de datos al realizar el registro de salida") 
 
-#registrar salida por documento, si la pistola falla        
-def check_out_doc_person(db:Session, documento_person:str):
-    try:
-        numero_documento = _extract_document_number(documento_person)
-
-        registro_activo = text("""
-                                SELECT id_acceso
-                                FROM registro_accesos
-                                WHERE documento = :documento_person
-                                AND fecha_salida IS NULL
-                                ORDER BY fecha_entrada DESC
-                                LIMIT 1;
-                               """)
-        
-        result_registro =db.execute(
-            registro_activo, {"documento_person": numero_documento }
-        ).mappings().first()
-        
-        if not result_registro:
-            return False
-        
-        sentencia = text("""
-            UPDATE registro_accesos
-            SET fecha_salida = NOW()
-            WHERE id_acceso = :access_id
-        """)
-        
-        result = db.execute(sentencia, {"access_id": result_registro["id_acceso"]})
-        db.commit()
-        
-        return result.rowcount > 0
-    
-    except SQLAlchemyError as e:
-            db.rollback()
-            logger.error(f"Error al realizar el registro de acceso: {e}")
-            raise Exception("Error de base de datos al realizar el registro de acceso") 
-
 #registrar salida por serial, si la pistola falla
 def check_out_equip_serial(db:Session, serial_eq:str):
     try:
         datos_equip_query = text("""
                                  SELECT id_equipo, persona_id
                                  FROM equipos_externos
-                                 WHERE codigo_barras_inv = :serial_eq
+                                 WHERE serial = :serial_eq
                                  """)
 
         equipo_result = db.execute(
@@ -448,11 +372,13 @@ def check_out_equip_serial(db:Session, serial_eq:str):
 def get_access_by_id(db:Session, id_acceso_p:int):
     try:
         access_query = text("""
-                            SELECT id_acceso, sede_id, persona_id, 
-                            equipo_id, usuario_registro_id,
-                            area_id, tipo_movimiento,
-                            fecha_entrada, fecha_salida
-                            FROM registro_accesos
+                            SELECT ra.id_acceso, ra.sede_id, ra.persona_id, 
+                            ra.equipo_id, ra.area_id, ra.usuario_registro_id,
+                            ra.tipo_movimiento, ra.fecha_entrada, ra.fecha_salida, ar.nombre_area
+                            FROM registro_accesos AS ra
+                            INNER JOIN personas as p ON p.id_persona = ra.persona_id
+                            INNER JOIN equipos_externos as e ON e.id_equipo = ra.equipo_id
+                            LEFT JOIN areas as ar ON ar.id_area = ra.area_id
                             WHERE id_acceso = :id_ingreso  
                         """)
         result = db.execute(access_query, {"id_ingreso":id_acceso_p}).mappings().first()
@@ -461,34 +387,24 @@ def get_access_by_id(db:Session, id_acceso_p:int):
     except SQLAlchemyError as e:
         logger.error(f"Error al obtener el registro de acceso por su id: {e}")
         raise Exception("Error de base de datos al obtener el registro de acceso por id")
-     
-def get_access_by_id_equip(db:Session, id_equipo:int):
-    try:
-        access_query = text("""
-                            SELECT id_acceso, sede_id, persona_id, 
-                            equipo_id, area_id, usuario_registro_id,
-                            tipo_movimiento,
-                            fecha_entrada, fecha_salida
-                            FROM registro_accesos
-                            WHERE equipo_id = :id_equip
-                            ORDER BY fecha_entrada DESC 
-                        """)
-        result = db.execute(access_query, {"id_equip":id_equipo}).mappings().all()
-        return result
-    except SQLAlchemyError as e:
-        logger.error(f"Error al obtener el registro de acceso por el id del equipo: {e}")
-        raise Exception("Error de base de datos al obtener el registro de acceso por el id del equipo")
-    
+        
 def get_all_access(db:Session):
     try:
-        access_query = text(""" SELECT * FROM registro_accesos """)
+        access_query = text("""SELECT ra.id_acceso, ra.sede_id, ra.persona_id, 
+                                ra.equipo_id, ra.area_id, ra.usuario_registro_id,
+                                ra.tipo_movimiento, ra.fecha_entrada, ra.fecha_salida, ar.nombre_area
+                                FROM registro_accesos AS ra
+                                INNER JOIN personas as p ON p.id_persona = ra.persona_id
+                                INNER JOIN equipos_externos as e ON e.id_equipo = ra.equipo_id
+                                LEFT JOIN areas as ar ON ar.id_area = ra.area_id 
+                                ORDER BY fecha_entrada DESC
+                                """)
         result = db.execute(access_query).mappings().all()
         return result
     except SQLAlchemyError as e:
         logger.error(f"Error al obtener todos los registros: {e}")
         raise Exception("Error de base de datos al obtener todos los registros")
-
-    
+ 
 def get_all_access_pag(db: Session, skip:int = 0, limit = 10):
     """
     Obtiene los usuarios con paginación.
@@ -505,12 +421,13 @@ def get_all_access_pag(db: Session, skip:int = 0, limit = 10):
         #2 Consultar usuarios
         data_query = text("""SELECT ra.id_acceso, ra.sede_id, ra.persona_id, 
                             ra.equipo_id, ra.area_id, ra.usuario_registro_id,
-                            ra.tipo_movimiento, ra.fecha_entrada, ra.fecha_salida
+                            ra.tipo_movimiento, ra.fecha_entrada, ra.fecha_salida, ar.nombre_area
                             FROM registro_accesos AS ra
-                          INNER JOIN personas as p ON p.id_persona = ra.persona_id
-                          INNER JOIN equipos_externos as e ON e.id_equipo = ra.equipo_id
-                          LIMIT :limit OFFSET :skip
-        """)
+                            INNER JOIN personas as p ON p.id_persona = ra.persona_id
+                            INNER JOIN equipos_externos as e ON e.id_equipo = ra.equipo_id
+                            LEFT JOIN areas as ar ON ar.id_area = ra.area_id
+                            LIMIT :limit OFFSET :skip
+                        """)
         access_list = db.execute(data_query,{"skip": skip, "limit": limit}).mappings().all()
         
         return {
