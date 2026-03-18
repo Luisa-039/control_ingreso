@@ -48,6 +48,7 @@ class Equipo_sedeOut(Equipo_sedeBase):
     sede_id: int
     nombre_sede: str
     nombre_categoria: str
+    nombre_area: str
    
 #Modelo para la paginación  
 class PaginatedEquipos_sede(BaseModel):
