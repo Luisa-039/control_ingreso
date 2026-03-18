@@ -1,9 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.router import users, auth, person, sede, center, equipments, equipments_sede, access, roles, autorizacion_salida, movements
+
+from app.router import users, auth, person, sede, center, equipments, equipments_sede, access, roles, autorizacion_salida, movements, permisos, department, type, modulo, categorie
+
 from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -23,6 +26,11 @@ app.include_router(equipments_sede.router, prefix="/equipments_sede", tags=["equ
 app.include_router(autorizacion_salida.router, prefix="/autorizacion_salida", tags=["autorizacion_salida"])
 app.include_router(movements.router, prefix="/movements", tags=["movements"])
 app.include_router(access.router, prefix="/access", tags=["access"])
+app.include_router(permisos.router, prefix="/permisos", tags=["permisos"])
+app.include_router(department.router, prefix="/deparment", tags=["departamentos"])
+app.include_router(type.router, prefix="/type", tags=["tipo_movimientos"])
+app.include_router(modulo.router, prefix="/modulo", tags=["modulos"])
+app.include_router(categorie.router, prefix="/categoria", tags=["categorias"])
 
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 

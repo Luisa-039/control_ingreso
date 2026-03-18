@@ -1,20 +1,20 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from app.crud.permisos import verify_permissions
 from app.router.dependencies import get_current_user
 from app.core.database import get_db
-from app.schemas.roles import RolesCreate, RolesUpdate, RolesOut
+from app.schemas.modulos import ModuloCreate, ModuloUpdate, ModuloOut, PaginatedModulos
 from app.schemas.users import UserOut
-from app.crud import roles as crud_roles
+from app.crud import modulo as crud_modulo
 from sqlalchemy.exc import SQLAlchemyError
 
 router = APIRouter()
-modulo = 3
+modulo = 1
 
 @router.post("/crear", status_code=status.HTTP_201_CREATED)
-def create_roles(
-    Rol: RolesCreate, 
+def create_modulos(
+    Modulo: ModuloCreate, 
     db: Session = Depends(get_db),
     user_token: UserOut = Depends(get_current_user)
 ):
@@ -24,13 +24,13 @@ def create_roles(
         if not verify_permissions(db, id_rol, modulo, 'insertar'):
             raise HTTPException(status_code=401, detail= 'Usuario no autorizado')
         
-        crud_roles.create_roles(db, Rol)
-        return {"message": "Rol registrado correctamente"}
+        crud_modulo.create_modulo(db, Modulo)
+        return {"message": "Módulo registrado correctamente"}
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@router.get("/by-id",  response_model=RolesOut)
-def get_rol_by_id(id: int, 
+@router.get("/by-id",  response_model=ModuloOut)
+def get_module_by_id(id: int, 
               db: Session = Depends(get_db),
               user_token: UserOut = Depends(get_current_user)):
     try:
@@ -38,15 +38,15 @@ def get_rol_by_id(id: int,
         if not verify_permissions(db, id_rol, modulo, 'seleccionar'):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
         
-        rol = crud_roles.get_rol_by_id(db, id)
-        if not rol:
-            raise HTTPException(status_code=404, detail="Rol no encontrado")
-        return rol
+        modulo = crud_modulo.get_modulo_by_id(db, id)
+        if not modulo:
+            raise HTTPException(status_code=404, detail="Módulo no encontrado")
+        return modulo
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/all/roles", response_model=List[RolesOut])
-def get_all_roles(
+@router.get("/all/modulos", response_model=List[ModuloOut])
+def get_all_modules(
     db: Session = Depends(get_db),
     user_token: UserOut = Depends(get_current_user)
 ):
@@ -54,14 +54,14 @@ def get_all_roles(
         id_rol = user_token.rol_id
         if not verify_permissions(db, id_rol, modulo, "seleccionar"):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
-        roles = crud_roles.get_all_rol(db)
-        return roles
+        modulos = crud_modulo.get_all_modules(db)
+        return modulos
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@router.put("/by_id/{id_rol}")
-def update_rol_by_id(id_rol: int, 
-                 rol: RolesUpdate, 
+@router.put("/by_id/{id_modulo}")
+def update_rol_by_id(id_modulo: int, 
+                 Modulo: ModuloUpdate, 
                  db: Session = Depends(get_db),
                  user_token: UserOut = Depends(get_current_user)):
     try:
@@ -69,30 +69,40 @@ def update_rol_by_id(id_rol: int,
         if not verify_permissions(db, id_roles, modulo, 'actualizar'):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
         
-        success = crud_roles.update_rol_by_id(db, id_rol, rol)
+        success = crud_modulo.update_module_by_id(db, id_modulo, Modulo)
         if not success:
-            raise HTTPException(status_code=400, detail="No se pudo actualizar el rol")
-        return {"message": "Rol actualizado correctamente"}
+            raise HTTPException(status_code=400, detail="No se pudo actualizar el módulo")
+        return {"message": "Módulo actualizado correctamente"}
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
-@router.put("/estado/{id_rol}", status_code=status.HTTP_200_OK)
-def estado_rol(
-    id_rol: str,
-    estado_rol: bool,
+
+#Endpoint para la paginación
+@router.get("/all_modules-pag", response_model=PaginatedModulos)
+def get_all_modules_pag(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db),
     user_token: UserOut = Depends(get_current_user)
-):
+): 
     try:
+        #Verificamos permisos        
         id_rol = user_token.rol_id
-        if not verify_permissions(db, id_rol, modulo, 'actualizar'):
+        if not verify_permissions(db, id_rol, modulo, 'seleccionar'):
             raise HTTPException(status_code=401, detail="Usuario no autorizado")
         
-        success = crud_roles.change_rol_status(db, id_rol, estado_rol)
-        if not success:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        skip = (page - 1) * page_size
+        data = crud_modulo.get_all_modules_pag(db, skip=skip, limit=page_size)
 
-        return {"message": f"Estado del rol actualizado a {estado_rol}"}
+        total = data["total"]  
+        modulos = data["modulos"]
+
+        return PaginatedModulos(
+            page= page,
+            page_size= page_size,
+            total_modulos= total,
+            total_pages= (total + page_size - 1) // page_size,
+            modulos= modulos
+        )
     except SQLAlchemyError as e:
-            raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
     

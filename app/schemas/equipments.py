@@ -38,8 +38,10 @@ class EquipoOut(EquipoBase):
     nombre_completo: str
     persona_id: int
 
+
 # Modelo para la paginación de equipos, incluye información sobre la página actual, el tamaño de página, el total de equipos, 
 # el total de páginas y la lista de equipos en la página actual
+
 class PaginatedEquipos(BaseModel):
     page: int
     page_size: int
