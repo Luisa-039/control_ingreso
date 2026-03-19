@@ -21,7 +21,8 @@ class MovementOut(MovementBase):
     categoria_id:int
     nombre_categoria:str
     nombre_usuario: str
-    
+    nombre_tipo: str
+
 class PaginatedMovements(BaseModel):
     page: int
     page_size: int
