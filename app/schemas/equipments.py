@@ -25,7 +25,6 @@ class EquipoUpdate(BaseModel):
     categoria_id: Optional[int] = None
     foto_path: Optional[str] = Field(default=None, min_length=3, max_length=255)
     marca_modelo: Optional[str] = Field(default=None,min_length=3, max_length=255)
-    fecha_registro: Optional[datetime] = Field(default=None)
     persona_id: Optional[int] = Field(default=None)
 
 # Solo se puede actualizar el estado del equipo
