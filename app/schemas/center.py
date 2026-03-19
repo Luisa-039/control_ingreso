@@ -5,7 +5,6 @@ class CenterBase(BaseModel):
     codigo_centro: str = Field(min_length=1, max_length=15)
     nombre: str = Field(min_length=3, max_length=100)
     ciudad_id: int
-    direccion: Optional[str] = Field(default=None, max_length=200)
 
 class CenterCreate(CenterBase):
     pass
@@ -13,8 +12,7 @@ class CenterCreate(CenterBase):
 class CenterUpdate(BaseModel):
     nombre: Optional[str] = Field(default=None, min_length=3, max_length=100)
     ciudad_id: Optional[int] = None
-    direccion: Optional[str] = Field(default=None, max_length=200)
-    
+   
 class CenterEstado(BaseModel):
     estado:bool
 
