@@ -18,7 +18,7 @@ def create_center(db: Session, centro: CenterCreate) -> Optional[bool]:
             ) VALUES (
                 :codigo_centro, :nombre,
                 :ciudad_id, :direccion,
-                :estado
+                true
             )
         """)
         db.execute(query, centro.model_dump())
