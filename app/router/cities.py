@@ -10,7 +10,7 @@ from app.crud import cities as crud_cities
 from sqlalchemy.exc import SQLAlchemyError
 
 router = APIRouter()
-modulo = 9
+modulo = 13
 
 @router.post("/crear-ciudad", status_code=status.HTTP_201_CREATED)
 def create_city(  
