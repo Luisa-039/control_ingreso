@@ -22,13 +22,14 @@ class AccesUpdate(AccessBase):
     usuario_registro_id: Optional[int] = None 
     area_id: Optional[int] = 0 
     tipo_movimiento: Optional[bool] 
-    fecha_entrada: Optional[datetime] = None 
     fecha_salida: Optional[datetime] = None
     
 class AccessOut(AccessBase):
     id_acceso: int
     fecha_salida: Optional[datetime] = None
     nombre_area: Optional[str] = None
+    nombre_sede: str
+    nombre_completo: str
     
 class PaginatedAccess(BaseModel):
     page: int
