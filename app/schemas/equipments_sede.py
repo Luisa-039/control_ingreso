@@ -35,7 +35,6 @@ class Equipo_sedeUpdate(BaseModel):
     area_id: Optional[int] = Field(default=None)
     marca: Optional[str] = Field(default=None,min_length=3, max_length=255)
     modelo: Optional[str] = Field(default=None,min_length=3, max_length=255)
-    fecha_registro: Optional[datetime] = Field(default=None)
     sede_id: Optional[int] = Field(default=None)
 
 #Modelo para manejar los estados
