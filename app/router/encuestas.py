@@ -10,7 +10,7 @@ from app.crud import encuesta as crud_encuesta
 from sqlalchemy.exc import SQLAlchemyError
 
 router = APIRouter()
-modulo = 10
+modulo = 18
 
 @router.post("/crear-encuesta", status_code=status.HTTP_201_CREATED)
 def create_encuesta(  
