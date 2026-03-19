@@ -19,3 +19,4 @@ class CenterEstado(BaseModel):
 
 class CenterOut(CenterBase):
     id_centro: int
+    nombre_ciudad: str
