@@ -374,15 +374,17 @@ def get_access_by_id(db:Session, id_acceso_p:int):
         access_query = text("""
                             SELECT ra.id_acceso, ra.sede_id, ra.persona_id, 
                             ra.equipo_id, ra.area_id, ra.usuario_registro_id,
-                            ra.tipo_movimiento, ra.fecha_entrada, ra.fecha_salida, ar.nombre_area
+                            ra.tipo_movimiento, ra.fecha_entrada, ra.fecha_salida, 
+                            ar.nombre_area, s.nombre AS nombre_sede, p.nombre_completo,
+                            e.marca_modelo, e.serial
                             FROM registro_accesos AS ra
                             INNER JOIN personas as p ON p.id_persona = ra.persona_id
                             INNER JOIN equipos_externos as e ON e.id_equipo = ra.equipo_id
                             LEFT JOIN areas as ar ON ar.id_area = ra.area_id
+                            LEFT JOIN sedes as s ON s.id_sede = ra.sede_id
                             WHERE id_acceso = :id_ingreso  
                         """)
         result = db.execute(access_query, {"id_ingreso":id_acceso_p}).mappings().first()
-        db.commit
         return result
     except SQLAlchemyError as e:
         logger.error(f"Error al obtener el registro de acceso por su id: {e}")
@@ -392,11 +394,14 @@ def get_all_access(db:Session):
     try:
         access_query = text("""SELECT ra.id_acceso, ra.sede_id, ra.persona_id, 
                                 ra.equipo_id, ra.area_id, ra.usuario_registro_id,
-                                ra.tipo_movimiento, ra.fecha_entrada, ra.fecha_salida, ar.nombre_area
+                                ra.tipo_movimiento, ra.fecha_entrada, ra.fecha_salida, 
+                                ar.nombre_area, s.nombre AS nombre_sede, p.nombre_completo,
+                                e.marca_modelo, e.serial
                                 FROM registro_accesos AS ra
                                 INNER JOIN personas as p ON p.id_persona = ra.persona_id
                                 INNER JOIN equipos_externos as e ON e.id_equipo = ra.equipo_id
-                                LEFT JOIN areas as ar ON ar.id_area = ra.area_id 
+                                LEFT JOIN areas as ar ON ar.id_area = ra.area_id
+                                LEFT JOIN sedes as s ON s.id_sede = ra.sede_id
                                 ORDER BY fecha_entrada DESC
                                 """)
         result = db.execute(access_query).mappings().all()
@@ -413,19 +418,22 @@ def get_all_access_pag(db: Session, skip:int = 0, limit = 10):
     """
     try: 
         
-        count_query = text("""SELECT COUNT(id_autorizacion) AS total 
-                     FROM autorizacion_salida
+        count_query = text("""SELECT COUNT(id_acceso) AS total 
+                     FROM registro_accesos
                      """)
         total_result = db.execute(count_query).scalar()
 
         #2 Consultar usuarios
         data_query = text("""SELECT ra.id_acceso, ra.sede_id, ra.persona_id, 
                             ra.equipo_id, ra.area_id, ra.usuario_registro_id,
-                            ra.tipo_movimiento, ra.fecha_entrada, ra.fecha_salida, ar.nombre_area
+                            ra.tipo_movimiento, ra.fecha_entrada, ra.fecha_salida, 
+                            ar.nombre_area, s.nombre AS nombre_sede, p.nombre_completo,
+                            e.marca_modelo, e.serial
                             FROM registro_accesos AS ra
                             INNER JOIN personas as p ON p.id_persona = ra.persona_id
                             INNER JOIN equipos_externos as e ON e.id_equipo = ra.equipo_id
                             LEFT JOIN areas as ar ON ar.id_area = ra.area_id
+                            LEFT JOIN sedes as s ON s.id_sede = ra.sede_id
                             LIMIT :limit OFFSET :skip
                         """)
         access_list = db.execute(data_query,{"skip": skip, "limit": limit}).mappings().all()
