@@ -58,11 +58,13 @@ def get_user_by_email(db: Session, email: str):
     
 def get_all_user_except_admins(db: Session):
     try:
-        query = text("""SELECT u.id_usuario, u.nombre_usuario, u.documento, u.rol_id, 
-                     u.email, u.telefono, u.sede_id, u.estado, u.pass_hash, r.nombre
-                     FROM usuarios as u
-                     INNER JOIN roles as r ON u.rol_id = r.id_rol
-                     WHERE u.rol_id NOT IN (1)""")
+        query = text("""SELECT u.id_usuario, u.rol_id, u.nombre_usuario, u.documento, u.email, 
+                        u.telefono, u.estado, u.sede_id, s.nombre, r.nombre AS nombre_rol
+                        FROM usuarios as u
+                        INNER JOIN sedes as s ON u.sede_id = s.id_sede
+                        INNER JOIN roles as r ON u.rol_id = r.id_rol
+                        WHERE u.rol_id NOT IN (1)
+                     """)
         result = db.execute(query).mappings().all()
         return result
     except SQLAlchemyError as e:
@@ -111,9 +113,11 @@ def update_user(db: Session, user_id: int, user_update: UserUpdate) -> bool:
     
 def get_user_by_id(db: Session, id: int):
     try:
-        query = text("""SELECT id_usuario, nombre_usuario, documento, usuarios.rol_id, email, telefono, usuarios.estado
-                     FROM usuarios
-                     JOIN roles ON usuarios.rol_id = roles.id_rol
+        query = text("""SELECT u.id_usuario, u.rol_id, u.nombre_usuario, u.documento, u.email, 
+                            u.telefono, u.estado, u.sede_id, s.nombre, r.nombre AS nombre_rol
+                            FROM usuarios as u
+                            INNER JOIN sedes as s ON u.sede_id = s.id_sede
+                            INNER JOIN roles as r ON u.rol_id = r.id_rol
                      WHERE id_usuario = :id_user
                      """)
         result = db.execute(query, {"id_user": id}).mappings().first()
@@ -124,9 +128,12 @@ def get_user_by_id(db: Session, id: int):
     
 def get_user_by_document_number(db: Session, document: str):
     try:
-        query = text("""SELECT id_usuario, nombre_usuario, documento, usuarios.rol_id, email, telefono, usuarios.estado, roles.descripcion as descripcion_rol 
-                     FROM usuarios INNER JOIN roles ON usuarios.rol_id = roles.id_rol
-                     WHERE usuarios.documento = :document
+        query = text("""SELECT u.id_usuario, u.rol_id, u.nombre_usuario, u.documento, u.email, 
+                            u.telefono, u.estado, u.sede_id, s.nombre, r.nombre AS nombre_rol
+                            FROM usuarios u
+                            INNER JOIN sedes AS s ON u.sede_id = s.id_sede
+                            INNER JOIN roles AS r ON u.rol_id = r.id_rol
+                     WHERE u.documento = :document
                 """)
         result = db.execute(query, {"document": document}).mappings().first()
         return result
@@ -136,10 +143,12 @@ def get_user_by_document_number(db: Session, document: str):
     
 def get_user_by_rol(db: Session, rol: str):
     try:
-        query = text("""SELECT id_usuario, nombre_usuario, documento, usuarios.rol_id, email, telefono, usuarios.estado, 
-                     roles.nombre AS nombre_rol, roles.descripcion as descripcion_rol
-                     FROM usuarios INNER JOIN roles ON usuarios.rol_id = roles.id_rol
-                     WHERE LOWER(roles.nombre) = LOWER(:rol)
+        query = text("""SELECT u.id_usuario, u.rol_id, u.nombre_usuario, u.documento, u.email, 
+                            u.telefono, u.estado, u.sede_id, s.nombre, r.nombre AS nombre_rol
+                            FROM usuarios u
+                            INNER JOIN sedes AS s ON u.sede_id = s.id_sede
+                            INNER JOIN roles AS r ON u.rol_id = r.id_rol
+                     WHERE LOWER(r.nombre) = LOWER(:rol)
                 """)
         result = db.execute(query, {"rol": rol}).mappings().all()
         return result
@@ -178,12 +187,14 @@ def get_all_users_pag(db: Session, skip:int = 0, limit = 10):
         total_result = db.execute(count_query).scalar()
 
         #2 Consultar usuarios
-        data_query = text("""SELECT u.id_usuario, u.rol_id, u.nombre_usuario, u.documento, u.email, u.telefono, u.estado, u.sede_id, s.nombre
-                    FROM usuarios as u
-                    INNER JOIN sedes as s ON u.sede_id = s.id_sede
-                    WHERE rol_id != 1
-                     LIMIT :limit OFFSET :skip
-        """)
+        data_query = text("""SELECT u.id_usuario, u.rol_id, u.nombre_usuario, u.documento, u.email, 
+                            u.telefono, u.estado, u.sede_id, s.nombre, r.nombre AS nombre_rol
+                            FROM usuarios as u
+                            INNER JOIN sedes as s ON u.sede_id = s.id_sede
+                            INNER JOIN roles as r ON u.rol_id = r.id_rol
+                            WHERE rol_id != 1
+                            LIMIT :limit OFFSET :skip
+                        """)
         users_list = db.execute(data_query,{"skip": skip, "limit": limit}).mappings().all()
         
         return {
