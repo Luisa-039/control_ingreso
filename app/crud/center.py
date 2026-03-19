@@ -13,11 +13,12 @@ def create_center(db: Session, centro: CenterCreate) -> Optional[bool]:
         query = text("""
             INSERT INTO centros (
                 codigo_centro, nombre, 
-                ciudad_id,
+                ciudad_id, direccion,
                 estado
             ) VALUES (
                 :codigo_centro, :nombre,
-                :ciudad_id, :estado
+                :ciudad_id, :direccion,
+                :estado
             )
         """)
         db.execute(query, centro.model_dump())
@@ -31,7 +32,7 @@ def create_center(db: Session, centro: CenterCreate) -> Optional[bool]:
 def get_center_by_code(db: Session, codigo: str):
     try:
         query = text("""SELECT cent.id_centro, cent.codigo_centro, cent.ciudad_id, cent.nombre,
-                        cent.estado, ciu.nombre AS nombre_ciudad
+                        cent.estado, cent.direccion, ciu.nombre AS nombre_ciudad
                         FROM centros cent
                         INNER JOIN ciudades ciu on cent.ciudad_id = ciu.id_ciudad
                         WHERE codigo_centro = :codigo
@@ -47,7 +48,7 @@ def get_all_center(db: Session):
     try:
         query = text("""
             SELECT cent.id_centro, cent.codigo_centro, cent.ciudad_id, cent.nombre,
-            cent.estado, ciu.nombre AS nombre_ciudad
+            cent.estado, cent.direccion, ciu.nombre AS nombre_ciudad
             FROM centros cent
             INNER JOIN ciudades ciu on cent.ciudad_id = ciu.id_ciudad
         """)
