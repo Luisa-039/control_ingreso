@@ -2,46 +2,12 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import Optional, List
 from sqlalchemy.exc import SQLAlchemyError
-from app.schemas.movements import MovementCreate, MovementUpdate
+from app.schemas.movements import MovementUpdate
 
 import logging
 
 logger = logging.getLogger(__name__)
 
-def create_movement(db: Session, movement: MovementCreate) -> Optional[bool]:
-    try:
-        estado_query = text("""SELECT a.estado
-                            FROM autorizacion_salida a
-                            WHERE a.id_autorizacion = :id_autorizacion
-                            """)
-        result = db.execute(estado_query, {"id_autorizacion": movement.autorizacion_id}).fetchone()
-
-        if not result:
-            return False
-        
-        estado_autorizacion = result[0]
-        
-        if estado_autorizacion == True :
-            insert_query = text("""
-            INSERT INTO movimientos_equipos_sede (
-                equipo_id, autorizacion_id,
-                usuario_registra, tipo_id, fecha_movimiento,
-            ) VALUES (
-                :equipo_id, :autorizacion_id,
-                :usuario_registra, :tipo_id, :fecha_movimiento
-            )
-            """)
-            db.execute(insert_query, movement.model_dump())
-            db.commit()
-            return True
-        
-        return False
-        
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.error(f"Error al crear el movimiento: {e}")
-        raise Exception("Error de base de datos al crear el movimiento")
-    
 def update_movement_by_id(db: Session, id_movimiento: int, movement_update: MovementUpdate) -> bool:
     try:
         query = text("""
@@ -63,11 +29,12 @@ def get_movement_serial(db:Session, serial: str):
     try:
         query = text("""SELECT m.id_movimiento_sede, m.equipo_id, m.autorizacion_id,
                         m.usuario_registra, m.tipo_id, m.fecha_movimiento, e.serial AS serial_equipo, 
-                        e.categoria_id, u.nombre_usuario, c.nombre_categoria
+                        e.categoria_id, u.nombre_usuario, c.nombre_categoria, tm.nombre_tipo
                         FROM movimientos_equipos_sede m
                         INNER JOIN equipos_sede_inv e ON m.equipo_id = e.id_equipo_sede
                         INNER JOIN categorias c ON c.id_categoria = e.categoria_id
                         INNER JOIN usuarios as u ON u.id_usuario = m.usuario_registra
+                        INNER JOIN tipo_movimientos tm ON tm.id_tipo = m.tipo_id
                         WHERE e.serial = :serial
                     """)
         result = db.execute(query, {"serial": serial}).mappings().all()
@@ -80,11 +47,12 @@ def get_all_movements(db: Session):
     try:
         query = text("""SELECT m.id_movimiento_sede, m.equipo_id, m.autorizacion_id,
                         m.usuario_registra, m.tipo_id, m.fecha_movimiento, e.serial AS serial_equipo, 
-                        e.categoria_id, u.nombre_usuario, c.nombre_categoria
+                        e.categoria_id, u.nombre_usuario, c.nombre_categoria, tm.nombre_tipo
                         FROM movimientos_equipos_sede m
                         INNER JOIN equipos_sede_inv e ON m.equipo_id = e.id_equipo_sede
                         INNER JOIN categorias c ON c.id_categoria = e.categoria_id
                         INNER JOIN usuarios as u ON u.id_usuario = m.usuario_registra
+                        INNER JOIN tipo_movimientos tm ON tm.id_tipo = m.tipo_id
                     """)
         result = db.execute(query).mappings().all()
         return result
@@ -125,11 +93,12 @@ def get_all_movements_pag(db: Session, skip:int = 0, limit = 10):
         #2 Consultar movimientos
         data_query = text("""SELECT m.id_movimiento_sede, m.equipo_id, m.autorizacion_id,
                             m.usuario_registra, m.tipo_id, m.fecha_movimiento, e.serial AS serial_equipo, 
-                            e.categoria_id, u.nombre_usuario, c.nombre_categoria
+                            e.categoria_id, u.nombre_usuario, c.nombre_categoria, tm.nombre_tipo
                             FROM movimientos_equipos_sede m
                             INNER JOIN equipos_sede_inv e ON m.equipo_id = e.id_equipo_sede
                             INNER JOIN categorias c ON c.id_categoria = e.categoria_id
                             INNER JOIN usuarios as u ON u.id_usuario = m.usuario_registra
+                            INNER JOIN tipo_movimientos tm ON tm.id_tipo = m.tipo_id
                             LIMIT :limit OFFSET :skip
                         """)
         movements_list = db.execute(data_query,{"skip": skip, "limit": limit}).mappings().all()
