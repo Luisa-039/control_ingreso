@@ -34,11 +34,13 @@ def create_user(db: Session, user: UserCreate) -> Optional[bool]:
     
 def get_user_by_email_for_login(db: Session, email: str):
     try:
-        query = text("""SELECT id_usuario, nombre_usuario, documento, usuarios.rol_id, sede_id,
-                email, telefono, usuarios.estado, roles.nombre, pass_hash
-                     FROM usuarios 
-                     INNER JOIN roles ON usuarios.rol_id = roles.id_rol
-                     WHERE email = :correo""")
+        query = text("""SELECT u.id_usuario, u.rol_id, u.nombre_usuario, u.documento, u.email, 
+                            u.telefono, u.estado, u.sede_id, u.pass_hash, s.nombre, r.nombre AS nombre_rol
+                            FROM usuarios as u
+                            INNER JOIN sedes as s ON u.sede_id = s.id_sede
+                            INNER JOIN roles as r ON u.rol_id = r.id_rol
+                     WHERE u.email = :correo
+                     """)
         result = db.execute(query, {"correo": email}).mappings().first()
         return result
     except SQLAlchemyError as e:
