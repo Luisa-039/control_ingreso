@@ -44,7 +44,6 @@ class Equipo_sedeEstado(BaseModel):
 #Modelo de salida 
 class Equipo_sedeOut(Equipo_sedeBase):
     id_equipo_sede: int
-    sede_id: int
     nombre_sede: str
     nombre_categoria: str
     nombre_area: str
