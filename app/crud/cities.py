@@ -97,3 +97,25 @@ def change_city_status(db: Session, id_ciudad: int, nuevo_estado: bool) -> bool:
         logger.error(f"Error al cambiar el estado de la ciudad {id_ciudad}: {e}")
         raise Exception("Error de base de datos al cambiar el estado de la ciudad")
 
+def get_all_cities_pag(db: Session, skip:int = 0, limit = 10):
+    try:
+        count_query = text("SELECT COUNT(id_ciudad) FROM ciudades")
+        total_cities = db.execute(count_query).scalar()
+        
+        query = text("""
+            SELECT ciu.id_ciudad, ciu.departamento_id, ciu.nombre, ciu.codigo, ciu.estado,
+            dep.nombre AS nombre_departamento
+            FROM ciudades ciu
+            INNER JOIN departamentos dep on ciu.departamento_id = dep.id_departamento
+            LIMIT :limit OFFSET :skip
+        """)
+        cities_result = db.execute(query, {"skip": skip, "limit": limit}).mappings().all()
+        return {
+            "total" : total_cities or 0,
+            "ciudades": cities_result
+        }
+    
+    except SQLAlchemyError as e:
+        logger.error(f"Error al obtener el listado de ciudades: {e}")
+        raise Exception("Error de base de datos al obtener el listado de ciudades")
+    
