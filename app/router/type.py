@@ -46,6 +46,25 @@ def get_type_by_id(id: int,
         return type
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.put("/by-id/{id_tipo}")
+def update_type_by_id(
+    id_tipo: int, 
+    type: TypeUpdate, 
+    db: Session = Depends(get_db),
+    user_token: UserOut = Depends(get_current_user)
+):
+    try:
+        id_rol = user_token.rol_id
+        if not verify_permissions(db, id_rol, modulo, 'actualizar'):
+            raise HTTPException(status_code=401, detail="Usuario no autorizado")
+        
+        success = crud_type.update_type_by_id(db, id_tipo, type)
+        if not success:
+            raise HTTPException(status_code=400, detail="No se pudo actualizar el tipo de movimiento")
+        return {"message": "Tipo de movimiento actualizado correctamente"}
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=str(e))
     
 #Endpoint para obtener todos los tipos de movimientos
 @router.get("/all-movements-types",  response_model=List[TypeOut])
