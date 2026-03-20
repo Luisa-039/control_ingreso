@@ -30,7 +30,7 @@ def create_permiso(
         raise HTTPException(status_code=500, detail=str(e))
 
 # Obtener todos los permisos
-@router.get("/todas", response_model=List[PermisoOut])
+@router.get("/all-permisos", response_model=List[PermisoOut])
 def get_all_permisos(
     db: Session = Depends(get_db),
     user_token: UserOut = Depends(get_current_user)
