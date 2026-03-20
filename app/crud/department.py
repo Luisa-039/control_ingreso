@@ -68,14 +68,14 @@ def get_all_departments_pag(db: Session, skip:int = 0, limit = 10):
 
         #2 Consultar departamentos
         data_query = text("""SELECT id_departamento, nombre, codigo
-                    FROM departamentos
-                    LIMIT :limit OFFSET :skip
-        """)
+                                FROM departamentos
+                                LIMIT :limit OFFSET :skip
+                        """)
         departments_list = db.execute(data_query,{"skip": skip, "limit": limit}).mappings().all()
         
         return {
                 "total": total_result or 0,
-                "department": departments_list
+            "departamentos": departments_list
             }
     except SQLAlchemyError as e:
         logger.error(f"Error al obtener los departamentos: {e}", exc_info=True)
