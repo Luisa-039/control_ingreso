@@ -41,6 +41,32 @@ def get_types_by_id(db: Session, id: int):
         logger.error(f"Error al obtener tipo de movimientos por id: {e}")
         raise Exception("Error de base de datos al obtener el tipo de movimientos")
 
+def update_type_by_id(db: Session, id: int, type: TypeUpdate) -> Optional[bool]:
+    try:
+        type_data = type.model_dump(exclude_unset=True)
+        if not type_data:
+            raise Exception("No se enviaron campos para actualizar")
+
+        set_clauses = ", ".join([f"{key} = :{key}" for key in type_data.keys()])
+        sentencia = text(f"""
+            UPDATE tipo_movimientos
+            SET {set_clauses}
+            WHERE id_tipo = :id_tipo
+        """)
+
+        type_data["id_tipo"] = id
+
+        result = db.execute(sentencia, type_data)
+        db.commit()
+
+        return result.rowcount > 0
+    
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Error al actualizar el tipo de movimiento: {e}")
+        raise Exception("Error de base de datos al actualizar el tipo de movimiento")
+
+
 #idn para obtener el listado con todos los tipos de movimientos existentes
 def get_all_types(db: Session):
     try:
