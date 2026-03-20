@@ -12,6 +12,16 @@ logger = logging.getLogger(__name__)
 
 def create_permiso(db: Session, permiso: PermisoCreate) -> Optional[bool]:
     try:
+        # Verificar si el permiso ya existe
+        check_query = text("""
+            SELECT id_rol FROM permisos
+            WHERE id_rol = :id_rol AND id_modulo = :id_modulo
+        """)
+        existing = db.execute(check_query, {"id_rol": permiso.id_rol, "id_modulo": permiso.id_modulo}).first()
+        
+        if existing:
+            raise Exception("permiso_existe")
+        
         query = text("""
             INSERT INTO permisos (
                 id_rol, id_modulo, insertar, actualizar, seleccionar, borrar
