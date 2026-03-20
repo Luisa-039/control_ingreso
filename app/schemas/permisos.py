@@ -19,4 +19,5 @@ class PermisoUpdate(BaseModel):
     borrar: Optional[bool] = None
 
 class PermisoOut(PermisoBase):
-    pass
+    nombre_modulo: str
+    nombre_rol: str
