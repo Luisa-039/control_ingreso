@@ -1,31 +1,88 @@
-from fastapi import HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import text
-import logging
+from typing import List
 
-logger = logging.getLogger(__name__)
+from app.schemas.permisos import PermisoCreate, PermisoOut, PermisoUpdate
+from app.schemas.users import UserOut
+from app.crud import modulo_permisos as modulo_permisos
+from app.crud.permisos import verify_permissions  # tu función actual de verificación
+from app.router.dependencies import get_current_user
+from app.core.database import get_db
 
-def verify_permissions(db: Session, id_rol: int, id_modulo: int, action:str):
+router = APIRouter()
+modulo = 2  # ID asignados
+
+# Crear permiso
+@router.post("/crear", status_code=status.HTTP_201_CREATED)
+def create_permiso(
+    permiso_data: PermisoCreate,
+    db: Session = Depends(get_db),
+    user_token: UserOut = Depends(get_current_user)
+):
+    id_rol = user_token.rol_id
+    if not verify_permissions(db, id_rol, modulo, 'insertar'):
+        raise HTTPException(status_code=401, detail="Usuario no autorizado para crear permisos")
     try:
-        query = text(""" SELECT insertar, actualizar, seleccionar, borrar
-                     FROM permisos 
-                     WHERE id_rol = :rol AND id_modulo= :modulo
-                """)
-        result = db.execute(query,{"rol": id_rol, "modulo":id_modulo}).mappings().first()
-        if (result is None):
-            raise HTTPException(status_code=401, detail="usuario no autorizado")
-        permiso=0
-        if result.insertar==1 and action == 'insertar':
-            permiso=1
-        if result.actualizar==1 and action == 'actualizar':
-            permiso=1
-        if result.seleccionar==1 and action == 'seleccionar':
-            permiso=1
-        if result.borrar==1 and action == 'borrar':
-            permiso=1
+        modulo_permisos.create_permiso(db, permiso_data)
+        return {"message": "Permiso creado correctamente"}
+    except Exception as e:
+        if "permiso_existe" in str(e):
+            raise HTTPException(status_code=409, detail="Este permiso ya existe")
+        raise HTTPException(status_code=500, detail=str(e))
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
+# Obtener todos los permisos
+@router.get("/all-permisos", response_model=List[PermisoOut])
+def get_all_permisos(
+    db: Session = Depends(get_db),
+    user_token: UserOut = Depends(get_current_user)
+):
+    id_rol = user_token.rol_id
+    if not verify_permissions(db, id_rol, modulo, 'seleccionar'):
+        raise HTTPException(status_code=401, detail="Usuario no autorizado para ver permisos")
+    try:
+        permisos = modulo_permisos.get_all_permisos(db)
+        return permisos
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Obtener permiso por id_modulo e id_rol
+@router.get("/{id_modulo}/{id_rol}", response_model=PermisoOut)
+def get_permiso_by_ids(
+    id_modulo: int,
+    id_rol: int,
+    db: Session = Depends(get_db),
+    user_token: UserOut = Depends(get_current_user)
+):
+    id_rol_user = user_token.rol_id
+    if not verify_permissions(db, id_rol_user, modulo, 'seleccionar'):
+        raise HTTPException(status_code=401, detail="Usuario no autorizado para ver permisos")
+    try:
+        permiso = modulo_permisos.get_permiso_by_ids(db, id_modulo, id_rol)
+        if not permiso:
+            raise HTTPException(status_code=404, detail="Permiso no encontrado")
         return permiso
     except SQLAlchemyError as e:
-        logger.error(f"Error al obtener permisos: {e}")
-        raise Exception("Error de base de datos al obtener los permisos")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Actualizar permiso
+@router.put("/{id_modulo}/{id_rol}")
+def update_permiso(
+    id_modulo: int,
+    id_rol: int,
+    permiso_data: PermisoUpdate,
+    db: Session = Depends(get_db),
+    user_token: UserOut = Depends(get_current_user)
+):
+    id_rol_user = user_token.rol_id
+    if not verify_permissions(db, id_rol_user, modulo, 'actualizar'):
+        raise HTTPException(status_code=401, detail="Usuario no autorizado para actualizar permisos")
+    try:
+        success = modulo_permisos.update_permiso(db, id_modulo, id_rol, permiso_data)
+        if not success:
+            raise HTTPException(status_code=404, detail="Permiso no encontrado")
+        return {"message": "Permiso actualizado correctamente"}
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=str(e))
