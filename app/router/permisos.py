@@ -26,6 +26,10 @@ def create_permiso(
     try:
         modulo_permisos.create_permiso(db, permiso_data)
         return {"message": "Permiso creado correctamente"}
+    except Exception as e:
+        if "permiso_existe" in str(e):
+            raise HTTPException(status_code=409, detail="Este permiso ya existe")
+        raise HTTPException(status_code=500, detail=str(e))
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
