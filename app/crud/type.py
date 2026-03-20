@@ -13,7 +13,7 @@ def create_type(db: Session, type: TypeCreate) -> Optional[bool]:
     try:
         #Se realiza la consulta
         query = text("""
-            INSERT INTO tipos_movimientos (
+            INSERT INTO tipo_movimientos (
                 nombre_tipo, descripcion
             ) VALUES (
                 :nombre_tipo, :descripcion
