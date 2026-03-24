@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import Optional
 from sqlalchemy.exc import SQLAlchemyError
-from app.schemas.types import TypeCreate
+from app.schemas.types import TypeCreate, TypeUpdate
 
 import logging
 
