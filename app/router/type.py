@@ -5,7 +5,7 @@ from app.core.database import get_db
 from app.crud.permisos import verify_permissions
 from app.router.dependencies import get_current_user
 from app.schemas.users import UserOut
-from app.schemas.types import TypeCreate, TypeOut
+from app.schemas.types import TypeCreate, TypeOut, TypeUpdate
 from app.crud import type as crud_type
 from sqlalchemy.exc import SQLAlchemyError
 
